@@ -1,0 +1,155 @@
+
+
+########## 0. 사전 점검 - gh 인증 상태 ##########
+
+$ gh auth status
+github.com
+  ✓ Logged in to github.com account wakeuponce (/home/wakeuponce/.config/gh/hosts.yml)
+  - Active account: true
+  - Git operations protocol: ssh
+  - Token: gho_************************************
+  - Token scopes: 'admin:public_key', 'gist', 'read:org', 'repo'
+
+
+########## 1. Git 사용자 정보 및 기본 브랜치 설정 ##########
+
+# GitHub 계정에서 로그인명과 숫자 ID 를 읽어 noreply 주소를 구성한다.
+
+# 형식: <숫자ID>+<로그인명>@users.noreply.github.com
+
+$ git config --global user.name 'wakeuponce'
+
+$ git config --global user.email '310057122+wakeuponce@users.noreply.github.com'
+
+# init.defaultBranch - 새 저장소의 기본 브랜치 이름. master 대신 main 을 쓴다.
+
+$ git config --global init.defaultBranch main
+
+# 전역 설정 전체
+
+$ git config --global --list
+user.name=wakeuponce
+user.email=310057122+wakeuponce@users.noreply.github.com
+init.defaultbranch=main
+
+# 현재 저장소에 적용되는 최종 설정 (전역 + 로컬 병합 결과)
+
+$ git config --list
+user.name=wakeuponce
+user.email=310057122+wakeuponce@users.noreply.github.com
+init.defaultbranch=main
+core.repositoryformatversion=0
+core.filemode=true
+core.bare=false
+core.logallrefupdates=true
+init.defaultbranch=main
+
+
+########## 2. 로컬 저장소 상태 확인 ##########
+
+$ git status --short --branch
+## No commits yet on master
+?? .dockerignore
+?? .gitignore
+?? Dockerfile
+?? README.md
+?? app/
+?? docker-compose.yml
+?? docker/
+?? docs/
+?? logs/
+?? scripts/
+
+# 현재 브랜치를 main 으로 맞춘다 (git init 이 이전 설정으로 만들어졌을 수 있음).
+
+$ git branch -M main
+
+# 커밋 대상에서 제외되는 규칙
+
+$ cat .gitignore
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 편집기 / 도구
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.claude/
+
+# 비밀정보 - 절대 커밋 금지
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+id_ecdsa*
+*.ppk
+*_token*
+credentials*
+
+# 실제로 무시되고 있는 파일이 있는지 확인
+
+$ git status --ignored --short | grep '^!!' || echo '(무시된 파일 없음)'
+(무시된 파일 없음)
+
+
+########## 3. 민감정보 스캔 (커밋 전 필수) ##########
+
+# 토큰/비밀번호/키 패턴이 커밋 대상에 섞이지 않았는지 확인한다.
+
+$ grep -rniE '(password|passwd|secret|token|api[_-]?key|private[_-]?key|ghp_|github_pat_|BEGIN [A-Z ]*PRIVATE KEY)' --exclude-dir=.git --exclude=.gitignore . || echo '(민감정보 패턴 없음)'
+./logs/02-permissions.log:53:$ cd /home/wakeuponce/codyssey-lab/perm && echo 'original content' > secret.txt
+./logs/02-permissions.log:57:$ cd /home/wakeuponce/codyssey-lab/perm && stat -c '%A (%a) %n' secret.txt
+./logs/02-permissions.log:58:-rw-r--r-- (644) secret.txt
+./logs/02-permissions.log:60:$ cd /home/wakeuponce/codyssey-lab/perm && echo 'appended before chmod' >> secret.txt && cat secret.txt
+./logs/02-permissions.log:66:$ cd /home/wakeuponce/codyssey-lab/perm && chmod 400 secret.txt
+./logs/02-permissions.log:70:$ cd /home/wakeuponce/codyssey-lab/perm && stat -c '%A (%a) %n' secret.txt
+./logs/02-permissions.log:71:-r-------- (400) secret.txt
+./logs/02-permissions.log:73:$ cd /home/wakeuponce/codyssey-lab/perm && cat secret.txt
+./logs/02-permissions.log:77:$ cd /home/wakeuponce/codyssey-lab/perm && echo 'appended after chmod' >> secret.txt
+./logs/02-permissions.log:78:scripts/_lib.sh: line 8: secret.txt: Permission denied
+./logs/02-permissions.log:83:$ cd /home/wakeuponce/codyssey-lab/perm && cat secret.txt
+./logs/02-permissions.log:89:$ cd /home/wakeuponce/codyssey-lab/perm && chmod 644 secret.txt && stat -c '%A (%a) %n' secret.txt
+./logs/02-permissions.log:90:-rw-r--r-- (644) secret.txt
+./logs/02-permissions.log:92:$ cd /home/wakeuponce/codyssey-lab/perm && echo 'appended after restore' >> secret.txt && cat secret.txt
+./logs/02-permissions.log:187:-rw-r--r--  644 /home/wakeuponce/codyssey-lab/perm/secret.txt
+grep: ./logs/07-git-github.log: input file is also the output
+./scripts/07-git-github.sh:66:run "grep -rniE '(password|passwd|secret|token|api[_-]?key|private[_-]?key|ghp_|github_pat_|BEGIN [A-Z ]*PRIVATE KEY)' --exclude-dir=.git --exclude=.gitignore . || echo '(민감정보 패턴 없음)'"
+./scripts/02-permissions.sh:6:#         - 파일 1개  : demo.sh, secret.txt
+./scripts/02-permissions.sh:60:run "cd $LAB && echo 'original content' > secret.txt"
+./scripts/02-permissions.sh:63:run "cd $LAB && stat -c '%A (%a) %n' secret.txt"
+./scripts/02-permissions.sh:64:run "cd $LAB && echo 'appended before chmod' >> secret.txt && cat secret.txt"
+./scripts/02-permissions.sh:67:run "cd $LAB && chmod 400 secret.txt"
+./scripts/02-permissions.sh:70:run "cd $LAB && stat -c '%A (%a) %n' secret.txt"
+./scripts/02-permissions.sh:71:run "cd $LAB && cat secret.txt"
+./scripts/02-permissions.sh:72:run "cd $LAB && echo 'appended after chmod' >> secret.txt"
+./scripts/02-permissions.sh:74:run "cd $LAB && cat secret.txt"
+./scripts/02-permissions.sh:77:run "cd $LAB && chmod 644 secret.txt && stat -c '%A (%a) %n' secret.txt"
+./scripts/02-permissions.sh:78:run "cd $LAB && echo 'appended after restore' >> secret.txt && cat secret.txt"
+./README.md:288:$ stat -c '%A (%a) %n' secret.txt
+./README.md:289:-rw-r--r-- (644) secret.txt
+./README.md:290:$ echo 'appended before chmod' >> secret.txt && cat secret.txt
+./README.md:294:$ chmod 400 secret.txt
+./README.md:297:$ stat -c '%A (%a) %n' secret.txt
+./README.md:298:-r-------- (400) secret.txt
+./README.md:299:$ cat secret.txt                        # 읽기는 여전히 가능
+./README.md:302:$ echo 'appended after chmod' >> secret.txt
+./README.md:303:scripts/_lib.sh: line 8: secret.txt: Permission denied      # 쓰기는 거부
+./README.md:305:$ cat secret.txt                        # 내용이 그대로임을 확인
+./README.md:1209:- **`.gitignore` 사전 차단**: `.env`, `*.pem`, `*.key`, `id_rsa*`, `*_token*`, `credentials*` 를 커밋 전에 차단합니다.
+./README.md:1213:  $ grep -rniE '(password|passwd|secret|token|api[_-]?key|private[_-]?key|ghp_|github_pat_|BEGIN [A-Z ]*PRIVATE KEY)' \
+./README.md:1215:  ./logs/02-permissions.log:53:$ ... echo 'original content' > secret.txt
+./README.md:1216:  ./logs/02-permissions.log:58:-rw-r--r-- (644) secret.txt
+./README.md:1217:  ./scripts/02-permissions.sh:60:run "cd $LAB && echo 'original content' > secret.txt"
+./README.md:1218:  ./README.md:296:-r-------- (400) secret.txt
+./README.md:1222:  **검출된 항목은 전부 오탐**입니다. §7.2 권한 실습에서 쓰기 권한 제거를 시연하려고 만든 파일 이름이 `secret.txt` 이고, 그 내용은 `original content` 라는 평문입니다. 실제 자격증명·토큰·키는 저장소 어디에도 없습니다.
+(민감정보 패턴 없음)
+
+
+########## 4. 커밋 ##########
+
+$ git add -A

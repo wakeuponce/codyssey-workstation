@@ -1,0 +1,278 @@
+
+
+########## 0. 실습 준비 ##########
+
+$ docker rm -f codyssey-web-8080 codyssey-web-8081 codyssey-web-noport 2>/dev/null; true
+codyssey-web-8080
+codyssey-web-8081
+
+$ pwd && ls -l
+/home/wakeuponce/codyssey
+total 24
+-rwxr-xr-x 1 wakeuponce wakeuponce 1942 Jul 29 15:26 Dockerfile
+drwxr-xr-x 2 wakeuponce wakeuponce 4096 Jul 29 15:35 app
+drwxr-xr-x 2 wakeuponce wakeuponce 4096 Jul 29 15:26 docker
+-rwxr-xr-x 1 wakeuponce wakeuponce 1518 Jul 29 15:26 docker-compose.yml
+drwxr-xr-x 2 wakeuponce wakeuponce 4096 Jul 29 15:35 logs
+drwxr-xr-x 2 wakeuponce wakeuponce 4096 Jul 29 15:37 scripts
+
+
+########## 1. 커스텀 이미지 빌드 ##########
+
+# 빌드 대상 Dockerfile
+
+$ cat Dockerfile
+# =============================================================================
+# Codyssey Mission 01 - 커스텀 웹 서버 이미지
+#
+# 방식 (A): 웹 서버 베이스 이미지(nginx:alpine) + 정적 콘텐츠/설정 교체
+#
+# 커스텀 포인트
+#   1) 정적 콘텐츠 교체   : app/ 을 nginx document root 로 복사
+#   2) 설정 템플릿 + 환경변수 : listen 포트와 /health 응답을 ENV 로 주입
+#   3) 패키지 추가        : curl (HEALTHCHECK 및 컨테이너 간 통신 검증용)
+#   4) HEALTHCHECK        : 컨테이너 자체 상태를 Docker 가 판정하도록 선언
+#   5) LABEL              : 이미지 메타데이터(OCI 표준 라벨) 명시
+# =============================================================================
+FROM nginx:alpine
+
+LABEL org.opencontainers.image.title="codyssey-web" \
+      org.opencontainers.image.description="Codyssey Mission 01 custom nginx image" \
+      org.opencontainers.image.authors="codyssey-student"
+
+# 커스텀 포인트 3) HEALTHCHECK 와 서비스 디스커버리 확인에 필요한 curl 설치
+RUN apk add --no-cache curl
+
+# 커스텀 포인트 2) 환경변수 기본값
+#   NGINX_PORT : 컨테이너 내부에서 listen 할 포트 (설정과 코드의 분리)
+#   APP_ENV    : 실행 모드 표시. /health 응답에 그대로 노출된다.
+ENV NGINX_PORT=80 \
+    APP_ENV=dev
+
+# nginx:alpine 은 /etc/nginx/templates/*.template 를 envsubst 로 치환해
+# /etc/nginx/conf.d/ 에 떨어뜨린 뒤 기동한다. (공식 엔트리포인트 기능)
+COPY docker/default.conf.template /etc/nginx/templates/default.conf.template
+
+# 커스텀 포인트 1) 정적 콘텐츠 교체
+COPY app/ /usr/share/nginx/html/
+
+EXPOSE 80
+
+# 커스텀 포인트 4) shell 형식으로 작성해야 런타임에 $NGINX_PORT 가 확장된다.
+HEALTHCHECK --interval=10s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -fsS "http://localhost:${NGINX_PORT}/health" || exit 1
+
+# 빌드 컨텍스트에서 제외되는 파일들 (.dockerignore)
+
+$ cat .dockerignore
+.git
+.gitignore
+docs/
+logs/
+README.md
+docker-compose.yml
+*.md
+
+# -t 는 이미지에 붙일 이름:태그. 마지막 '.' 은 빌드 컨텍스트 경로다.
+
+$ docker build -t codyssey-web:1.0 .
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.98kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/nginx:alpine
+#2 DONE 1.5s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 102B done
+#3 DONE 0.0s
+
+#4 [internal] load build context
+#4 transferring context: 1.32kB done
+#4 DONE 0.0s
+
+#5 [1/4] FROM docker.io/library/nginx:alpine@sha256:4a73073bd557c65b759505da037898b61f1be6cbcc3c2c3aeac22d2a470c1752
+#5 resolve docker.io/library/nginx:alpine@sha256:4a73073bd557c65b759505da037898b61f1be6cbcc3c2c3aeac22d2a470c1752 0.0s done
+#5 DONE 0.0s
+
+#6 [3/4] COPY docker/default.conf.template /etc/nginx/templates/default.conf.template
+#6 CACHED
+
+#7 [2/4] RUN apk add --no-cache curl
+#7 CACHED
+
+#8 [4/4] COPY app/ /usr/share/nginx/html/
+#8 CACHED
+
+#9 exporting to image
+#9 exporting layers done
+#9 exporting manifest sha256:9ec824b3fe89c78cdf823a91942473933e13a6d83f1a538c1b1add3535e8cc36 done
+#9 exporting config sha256:fad472a992124eb64840fe8514d785d7d4cb3fdf39150145bd71afe942b9250c done
+#9 exporting attestation manifest sha256:280cc9ad9e1ce1560e581ac0f0c7297a25f6c59d0d3f12505cc0a7c346d17705
+#9 exporting attestation manifest sha256:280cc9ad9e1ce1560e581ac0f0c7297a25f6c59d0d3f12505cc0a7c346d17705 0.0s done
+#9 exporting manifest list sha256:3e42bd83e2a6e9ba3e96b2412e414f0f80d6278b375974bc69dc2186959fabc0 0.0s done
+#9 naming to docker.io/library/codyssey-web:1.0 done
+#9 unpacking to docker.io/library/codyssey-web:1.0 done
+#9 DONE 0.1s
+
+# 베이스 이미지(nginx:alpine)와 내가 만든 이미지가 함께 보인다.
+
+$ docker images
+IMAGE                ID             DISK USAGE   CONTENT SIZE   EXTRA
+codyssey-web:1.0     3e42bd83e2a6       92.9MB         26.1MB        
+hello-world:latest   c3cbe1cc1aa5       25.9kB         9.49kB        
+ubuntu:24.04         4fbb8e6a8395        119MB         31.7MB        
+
+# 이미지에 새겨둔 LABEL / ENV 확인
+
+$ docker inspect codyssey-web:1.0 --format 'Labels: {{json .Config.Labels}}'
+Labels: {"maintainer":"NGINX Docker Maintainers <docker-maint@nginx.com>","org.opencontainers.image.authors":"codyssey-student","org.opencontainers.image.description":"Codyssey Mission 01 custom nginx image","org.opencontainers.image.title":"codyssey-web"}
+
+$ docker inspect codyssey-web:1.0 --format 'Env: {{json .Config.Env}}'
+Env: ["PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin","NGINX_VERSION=1.31.3","PKG_RELEASE=1","DYNPKG_RELEASE=1","NJS_VERSION=1.0.0","NJS_RELEASE=1","ACME_VERSION=0.4.1","NGINX_PORT=80","APP_ENV=dev"]
+
+
+########## 2. 포트 매핑 1회차 - 8080 -> 80 ##########
+
+# -p <호스트포트>:<컨테이너포트>. 호스트 8080 으로 들어온 요청을 컨테이너 80 으로 전달한다.
+
+# --restart unless-stopped : Docker 데몬이 재시작되면 컨테이너도 자동으로 다시 뜬다.
+
+#   (WSL 배포판이 종료됐다 켜지면 dockerd 도 재시작되므로, 이 정책이 없으면 멈춰 있다. 트러블슈팅 #2)
+
+$ docker run -d -p 8080:80 --restart unless-stopped --name codyssey-web-8080 codyssey-web:1.0
+91334a6934ab1c8ac93002016cf2283785fd340becef3593218d33691e85446c
+
+$ sleep 2
+
+$ docker ps --format 'table {{.Names}}\t{{.Ports}}\t{{.Status}}'
+NAMES               PORTS                                     STATUS
+codyssey-web-8080   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   Up 2 seconds (health: starting)
+
+# 실제 응답 확인 - HTTP 상태줄과 헤더
+
+$ curl -sS -i http://localhost:8080/ | head -12
+HTTP/1.1 200 OK
+Server: nginx/1.31.3
+Date: Wed, 29 Jul 2026 06:37:27 GMT
+Content-Type: text/html
+Content-Length: 1142
+Last-Modified: Wed, 29 Jul 2026 06:26:32 GMT
+Connection: keep-alive
+ETag: "6a699d18-476"
+Accept-Ranges: bytes
+
+<!doctype html>
+<html lang="ko">
+
+# 본문 확인 (바인드 마운트 실습에서 바뀔 마커 라인 포함)
+
+$ curl -sS http://localhost:8080/ | grep -E 'marker|<h1>'
+    <h1>개발 워크스테이션 구축</h1>
+    <p class="marker" id="marker">SOURCE: image (빌드 시점에 이미지로 구운 파일)</p>
+
+# 환경변수 주입 확인 - Dockerfile 의 ENV 기본값(dev)이 그대로 보인다.
+
+$ curl -sS http://localhost:8080/health
+ok env=dev port=80
+
+
+########## 3. 포트 매핑 2회차 - 8081 -> 80 (같은 이미지, 다른 포트/다른 설정) ##########
+
+# 이미지 하나로 여러 컨테이너를 동시에 띄울 수 있다. 컨테이너 포트는 둘 다 80 이지만
+
+# 호스트 포트가 다르므로 충돌하지 않는다. -e 로 환경변수를 덮어써 설정만 바꿔본다.
+
+$ docker run -d -p 8081:80 -e APP_ENV=prod --restart unless-stopped --name codyssey-web-8081 codyssey-web:1.0
+ab047e18bf2affe5e3f6fee5d9008c332ff1582a2528da5c0b36ff58714b1d12
+
+$ sleep 2
+
+$ docker ps --format 'table {{.Names}}\t{{.Ports}}\t{{.Status}}'
+NAMES               PORTS                                     STATUS
+codyssey-web-8081   0.0.0.0:8081->80/tcp, [::]:8081->80/tcp   Up 2 seconds (health: starting)
+codyssey-web-8080   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   Up 5 seconds (healthy)
+
+$ curl -sS -i http://localhost:8081/ | head -3
+HTTP/1.1 200 OK
+Server: nginx/1.31.3
+Date: Wed, 29 Jul 2026 06:37:30 GMT
+
+# 8080 은 env=dev, 8081 은 env=prod. 코드는 그대로고 설정만 달라졌다.
+
+$ curl -sS http://localhost:8080/health
+ok env=dev port=80
+
+$ curl -sS http://localhost:8081/health
+ok env=prod port=80
+
+
+########## 4. HEALTHCHECK 동작 확인 ##########
+
+# Dockerfile 의 HEALTHCHECK 가 컨테이너 상태를 healthy/unhealthy 로 판정한다.
+
+$ sleep 12
+
+$ docker ps --format 'table {{.Names}}\t{{.Status}}'
+NAMES               STATUS
+codyssey-web-8081   Up 14 seconds (healthy)
+codyssey-web-8080   Up 17 seconds (healthy)
+
+$ docker inspect codyssey-web-8080 --format 'Health={{.State.Health.Status}}'
+Health=healthy
+
+$ docker inspect codyssey-web-8080 --format 'LastCheck={{json (index .State.Health.Log 0).Output}}'
+LastCheck="ok env=dev port=80\n"
+
+
+########## 5. 포트 매핑이 왜 필요한가 - -p 없이 띄워서 비교 ##########
+
+# 컨테이너는 자기만의 네트워크 네임스페이스를 갖는다. 컨테이너의 80 포트는
+
+# 호스트의 80 포트가 아니라 '컨테이너 안의' 80 포트다. -p 로 다리를 놓아야 호스트가 닿는다.
+
+$ docker run -d --name codyssey-web-noport codyssey-web:1.0
+bcf446c4750784948eaa7cc18045cf9a612a3d0c7529dd31eb115da4729aa0b6
+
+$ sleep 2
+
+# -p 가 없으므로 PORTS 칸이 비어 있다.
+
+$ docker ps --format 'table {{.Names}}\t{{.Ports}}'
+NAMES                 PORTS
+codyssey-web-noport   80/tcp
+codyssey-web-8081     0.0.0.0:8081->80/tcp, [::]:8081->80/tcp
+codyssey-web-8080     0.0.0.0:8080->80/tcp, [::]:8080->80/tcp
+
+# 컨테이너 '안에서는' 웹서버가 정상 동작한다.
+
+$ docker exec codyssey-web-noport curl -sS http://localhost:80/health
+ok env=dev port=80
+
+# 하지만 호스트에서 그 컨테이너로 직접 닿을 방법이 없다. (8082 는 아무도 안 듣고 있음)
+
+$ curl -sS --max-time 5 http://localhost:8082/health
+curl: (7) Failed to connect to localhost port 8082 after 0 ms: Could not connect to server
+[exit=7]
+
+# 컨테이너는 브리지 네트워크상의 사설 IP 를 갖는다. 이 IP 는 호스트 내부에서만 유효하고
+
+# 외부/브라우저가 알 수 있는 주소가 아니다. 그래서 포트 매핑이라는 명시적 통로가 필요하다.
+
+$ docker inspect codyssey-web-noport --format 'ContainerIP={{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}'
+ContainerIP=172.17.0.4
+
+$ docker rm -f codyssey-web-noport
+codyssey-web-noport
+
+
+########## 6. 현재 실행 상태 요약 ##########
+
+$ docker ps --format 'table {{.Names}}\t{{.Image}}\t{{.Ports}}\t{{.Status}}'
+NAMES               IMAGE              PORTS                                     STATUS
+codyssey-web-8081   codyssey-web:1.0   0.0.0.0:8081->80/tcp, [::]:8081->80/tcp   Up 19 seconds (healthy)
+codyssey-web-8080   codyssey-web:1.0   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   Up 22 seconds (healthy)
+
+# 8080/8081 컨테이너는 다음 단계(바인드 마운트/볼륨) 및 브라우저 접속 확인을 위해 살려둔다.
