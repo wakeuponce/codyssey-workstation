@@ -88,7 +88,7 @@ codyssey/
 #    Ubuntu 안에서:                   bash scripts/setup-docker-wsl.sh
 #    (설치 후 PowerShell 에서 wsl --shutdown 으로 재시작해야 docker 그룹이 적용됩니다)
 
-git clone https://github.com/<OWNER>/codyssey-workstation.git
+git clone https://github.com/wakeuponce/codyssey-workstation.git
 cd codyssey-workstation
 
 bash scripts/01-terminal-basics.sh   | tee logs/01-terminal.log
@@ -97,7 +97,13 @@ bash scripts/03-docker-basics.sh     | tee logs/03-docker-basics.log
 bash scripts/04-build-and-ports.sh   | tee logs/04-build-and-ports.log
 bash scripts/05-mount-and-volume.sh  | tee logs/05-mount-and-volume.log
 bash scripts/06-compose.sh           | tee logs/06-compose.log
+
+# 07 은 GitHub 계정을 건드리므로(저장소 생성/푸시) 재현 시에는 선택 사항입니다.
+# gh 인증이 되어 있어야 하며, REPO_NAME 변수를 본인 것으로 바꿔 실행하세요.
+# bash scripts/07-git-github.sh      | tee logs/07-git-github.log
 ```
+
+실행 후 브라우저에서 <http://localhost:8080> 과 <http://localhost:8081> 로 접속하면 §7.8 의 화면을 직접 확인할 수 있습니다.
 
 > **개인 PC 종속 요소와 대체 방법**
 > - 스크립트는 모두 **경로를 하드코딩하지 않습니다**. `$(dirname "$0")/..` 와 `$HOME` 으로 계산하므로 저장소를 어디에 두든 동작합니다.
@@ -126,15 +132,15 @@ bash scripts/06-compose.sh           | tee logs/06-compose.log
 | 13 | 포트 매핑 접속 성공 (2회) | ✅ | [§7.8](#78-포트-매핑-및-접속-증거) |
 | 14 | 바인드 마운트 변경 반영 (호스트 변경 전/후) | ✅ | [§7.9](#79-바인드-마운트--호스트-변경-즉시-반영) · [logs/05](logs/05-mount-and-volume.log) |
 | 15 | Docker 볼륨 영속성 (컨테이너 삭제 전/후) | ✅ | [§7.10](#710-볼륨-영속성--컨테이너-삭제-전후) |
-| 16 | Git 사용자 정보·기본 브랜치 설정 (`git config --list`) | ⏳ | [§7.12](#712-git-설정-및-github-연동) |
-| 17 | GitHub 로그인 및 저장소 연동 | ⏳ | [§7.12](#712-git-설정-및-github-연동) |
+| 16 | Git 사용자 정보·기본 브랜치 설정 (`git config --list`) | ✅ | [§7.12](#712-git-설정-및-github-연동) · [logs/07](logs/07-git-github.log) |
+| 17 | GitHub 로그인 및 저장소 연동 | ✅ | [§7.12](#712-git-설정-및-github-연동) |
 | 18 | 민감정보 마스킹 | ✅ | [§10](#10-보안--개인정보-보호) |
 | **보너스** | | | |
 | B1 | Compose 단일/멀티 서비스 실행 | ✅ | [§7.11](#711-보너스--docker-compose) · [logs/06](logs/06-compose.log) |
 | B2 | 컨테이너 간 네트워크 통신 확인 | ✅ | [§7.11](#711-보너스--docker-compose) |
 | B3 | Compose 운영 명령 (`up`/`down`/`ps`/`logs`) | ✅ | [§7.11](#711-보너스--docker-compose) |
 | B4 | 환경 변수 주입으로 설정 분리 | ✅ | [§7.8](#78-포트-매핑-및-접속-증거) |
-| B5 | GitHub SSH 키 설정 | ⬜ | 미수행 (HTTPS + gh 인증 사용) |
+| B5 | GitHub SSH 키 설정 | ✅ | [§7.12 ⑤](#712-git-설정-및-github-연동) |
 
 ---
 
@@ -1096,9 +1102,141 @@ docker stats --no-stream   # 자원을 얼마나 쓰나
 
 ### 7.12 Git 설정 및 GitHub 연동
 
-<!-- GIT_SECTION_START -->
-_(이 절은 GitHub 인증 후 실제 출력으로 채워집니다.)_
-<!-- GIT_SECTION_END -->
+전체 로그: [`logs/07-git-github.log`](logs/07-git-github.log) · 스크립트: [`scripts/07-git-github.sh`](scripts/07-git-github.sh)
+
+**저장소**: <https://github.com/wakeuponce/codyssey-workstation>
+
+#### ① Git 사용자 정보 및 기본 브랜치 설정
+
+커밋 이메일은 GitHub 계정의 **noreply 주소**를 씁니다. 공개 저장소의 커밋 로그에 실제 메일 주소가 영구히 남는 것을 막기 위함입니다. 주소는 `gh api user` 로 로그인명과 숫자 ID 를 읽어 `<숫자ID>+<로그인명>@users.noreply.github.com` 형식으로 구성했습니다.
+
+```bash
+$ git config --global user.name 'wakeuponce'
+$ git config --global user.email '310057122+wakeuponce@users.noreply.github.com'
+$ git config --global init.defaultBranch main
+
+$ git config --global --list
+user.name=wakeuponce
+user.email=310057122+wakeuponce@users.noreply.github.com
+init.defaultbranch=main
+
+$ git config --list            # 전역 + 로컬 병합 결과
+user.name=wakeuponce
+user.email=310057122+wakeuponce@users.noreply.github.com
+init.defaultbranch=main
+core.repositoryformatversion=0
+core.filemode=true
+core.bare=false
+core.logallrefupdates=true
+init.defaultbranch=main
+```
+
+> `core.filemode=true` 가 보이는 것이 중요합니다. Git 이 실행 권한 비트를 추적하고 있다는 뜻으로, §7.2 의 권한 실습이 Linux 파일시스템에서 제대로 동작하는 것과 같은 맥락입니다. Windows 경로(`/mnt/c`)에서 작업했다면 이 값이 `false` 가 됩니다.
+
+`init.defaultBranch` 는 **앞으로 만들 저장소**에만 적용되므로, 이미 `master` 로 만들어진 현재 브랜치는 따로 이름을 바꿔야 했습니다.
+
+```bash
+$ git status --short --branch
+## No commits yet on master        # ← init 시점엔 master 였다
+$ git branch -M main               # -M 은 강제 rename
+```
+
+#### ② 커밋
+
+```bash
+$ git add -A
+$ git status --short
+A  .dockerignore
+A  .gitignore
+A  Dockerfile
+A  README.md
+A  app/index.html
+...
+A  scripts/setup-docker-wsl.sh
+
+$ git log --stat --oneline -1
+6b470b8 Codyssey Mission 01: 개발 워크스테이션 구축
+ .dockerignore                  |    7 +
+ .gitignore                     |   23 +
+ Dockerfile                     |   39 ++
+ README.md                      | 1224 +++++++++++++++++++++++++++++++++++
+ app/index.html                 |   32 ++
+ ...
+ 25 files changed, 4118 insertions(+)
+
+$ git log -1 --format='Author: %an <%ae>%nDate:   %ad'
+Author: wakeuponce <310057122+wakeuponce@users.noreply.github.com>
+Date:   Wed Jul 29 17:01:10 2026 +0900
+```
+
+커밋 작성자에 실제 메일 주소가 아니라 noreply 주소가 기록된 것을 확인할 수 있습니다.
+
+#### ③ GitHub 저장소 생성 및 푸시
+
+```bash
+$ gh repo create codyssey-workstation --public --source=. --remote=origin --push \
+    --description 'Codyssey Mission 01 - 터미널/Docker/Git 개발 워크스테이션 구축'
+https://github.com/wakeuponce/codyssey-workstation
+To github.com:wakeuponce/codyssey-workstation.git
+ * [new branch]      HEAD -> main
+branch 'main' set up to track 'origin/main'.
+```
+
+#### ④ 연동 결과 확인
+
+```bash
+$ git remote -v
+origin	git@github.com:wakeuponce/codyssey-workstation.git (fetch)
+origin	git@github.com:wakeuponce/codyssey-workstation.git (push)
+
+$ git branch -vv
+* main 6b470b8 [origin/main] Codyssey Mission 01: 개발 워크스테이션 구축
+
+$ gh repo view wakeuponce/codyssey-workstation --json name,visibility,url,defaultBranchRef
+{"defaultBranchRef":{"name":"main"},"name":"codyssey-workstation",
+ "url":"https://github.com/wakeuponce/codyssey-workstation","visibility":"PUBLIC"}
+```
+
+로컬과 원격의 커밋 해시가 일치하는지로 푸시 반영을 확인합니다.
+
+```bash
+$ git rev-parse HEAD
+6b470b8c714062e95701ab7ccf6a01c904c475ad
+
+$ git ls-remote origin refs/heads/main
+6b470b8c714062e95701ab7ccf6a01c904c475ad	refs/heads/main
+```
+
+#### ⑤ [보너스 B5] SSH 인증
+
+`gh auth login` 과정에서 ed25519 키 쌍이 생성되어 GitHub 계정에 등록됐고, `origin` 이 `git@github.com:` 형식이므로 푸시가 SSH 로 이뤄집니다.
+
+```bash
+$ stat -c '%A (%a) %n' ~/.ssh/id_ed25519
+-rw------- (600) /home/wakeuponce/.ssh/id_ed25519      # 개인키는 소유자만 읽기
+
+$ gh ssh-key list | cut -c1-60
+GitHub CLI	ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEiFiVneWcmrf
+
+$ ssh -T git@github.com
+Hi wakeuponce! You've successfully authenticated, but GitHub does not provide shell access.
+
+$ git remote get-url origin
+git@github.com:wakeuponce/codyssey-workstation.git
+```
+
+**HTTPS vs SSH** — HTTPS 는 푸시할 때마다 개인 액세스 토큰이 필요하고 그 토큰이 어딘가에 저장돼야 합니다. SSH 는 공개키를 GitHub 에 등록해두고 개인키로 서명하므로, 비밀값이 네트워크로 전송되지 않습니다. §7.2 에서 본 권한 개념이 여기서도 그대로 적용됩니다 — 개인키가 `600` 이 아니면 `ssh` 가 아예 사용을 거부합니다.
+
+개인키가 저장소에 섞여 들어가지 않도록 `.gitignore` 로도 이중 차단했습니다.
+
+```bash
+$ git check-ignore -v id_ed25519
+.gitignore:19:id_ed25519*	id_ed25519
+```
+
+#### ⑥ VSCode ↔ GitHub 연동
+
+![VSCode GitHub 연동](docs/screenshots/vscode-github.png)
 
 ---
 
@@ -1205,8 +1343,9 @@ _(이 절은 GitHub 인증 후 실제 출력으로 채워집니다.)_
 ## 10. 보안 / 개인정보 보호
 
 - **커밋 이메일**: GitHub `noreply` 주소를 사용해 실제 메일 주소가 공개 커밋 로그에 남지 않도록 했습니다 ([§7.12](#712-git-설정-및-github-연동)).
-- **토큰/비밀번호**: 저장소와 로그 어디에도 토큰·비밀번호·개인키가 포함되지 않습니다. GitHub 인증은 `gh auth login` 의 브라우저 OAuth 플로우로 수행했고, 자격증명은 `gh` 가 관리하는 로컬 저장소에만 있습니다.
-- **`.gitignore` 사전 차단**: `.env`, `*.pem`, `*.key`, `id_rsa*`, `*_token*`, `credentials*` 를 커밋 전에 차단합니다.
+- **토큰/비밀번호**: 저장소와 로그 어디에도 토큰·비밀번호·개인키가 포함되지 않습니다. GitHub 인증은 `gh auth login` 의 브라우저 OAuth 플로우로 수행했고, 자격증명은 `gh` 가 관리하는 `~/.config/gh/hosts.yml` 에만 있습니다. 로그에 남은 `gh auth status` 출력에서도 토큰은 `gho_****...` 로 마스킹되어 있습니다.
+- **SSH 개인키**: `~/.ssh/id_ed25519` 는 저장소 밖에 있고 권한이 `600` 입니다. 실수로 복사해 오더라도 `.gitignore` 의 `id_ed25519*` 규칙이 커밋을 차단합니다 (`git check-ignore` 로 확인). 로그에 기록된 것은 **공개키**뿐이며, 공개키는 GitHub 이 `github.com/<user>.keys` 로 공개하는 값이라 비밀이 아닙니다.
+- **`.gitignore` 사전 차단**: `.env`, `*.pem`, `*.key`, `id_rsa*`, `id_ed25519*`, `id_ecdsa*`, `*.ppk`, `*_token*`, `credentials*` 를 커밋 전에 차단합니다.
 - **로그 검증**: 커밋 전 아래 명령으로 민감정보 패턴을 점검했습니다. ([`scripts/07-git-github.sh`](scripts/07-git-github.sh) §3 에 절차로 포함)
 
   ```bash

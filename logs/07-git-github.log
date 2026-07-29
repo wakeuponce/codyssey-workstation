@@ -153,3 +153,131 @@ grep: ./logs/07-git-github.log: input file is also the output
 ########## 4. 커밋 ##########
 
 $ git add -A
+
+$ git status --short
+A  .dockerignore
+A  .gitignore
+A  Dockerfile
+A  README.md
+A  app/index.html
+A  app/style.css
+A  docker-compose.yml
+A  docker/default.conf.template
+A  docs/screenshots/README.md
+A  logs/01-terminal.log
+A  logs/02-permissions.log
+A  logs/03-docker-basics.log
+A  logs/04-build-and-ports.log
+A  logs/05-mount-and-volume.log
+A  logs/06-compose.log
+AM logs/07-git-github.log
+A  scripts/01-terminal-basics.sh
+A  scripts/02-permissions.sh
+A  scripts/03-docker-basics.sh
+A  scripts/04-build-and-ports.sh
+A  scripts/05-mount-and-volume.sh
+A  scripts/06-compose.sh
+A  scripts/07-git-github.sh
+A  scripts/_lib.sh
+A  scripts/setup-docker-wsl.sh
+
+$ git log --stat --oneline -1
+6b470b8 Codyssey Mission 01: 개발 워크스테이션 구축
+ .dockerignore                  |    7 +
+ .gitignore                     |   23 +
+ Dockerfile                     |   39 ++
+ README.md                      | 1224 ++++++++++++++++++++++++++++++++++++++++
+ app/index.html                 |   32 ++
+ app/style.css                  |   82 +++
+ docker-compose.yml             |   41 ++
+ docker/default.conf.template   |   20 +
+ docs/screenshots/README.md     |   26 +
+ logs/01-terminal.log           |  147 +++++
+ logs/02-permissions.log        |  198 +++++++
+ logs/03-docker-basics.log      |  335 +++++++++++
+ logs/04-build-and-ports.log    |  278 +++++++++
+ logs/05-mount-and-volume.log   |  205 +++++++
+ logs/06-compose.log            |  453 +++++++++++++++
+ logs/07-git-github.log         |  155 +++++
+ scripts/01-terminal-basics.sh  |   69 +++
+ scripts/02-permissions.sh      |  126 +++++
+ scripts/03-docker-basics.sh    |  125 ++++
+ scripts/04-build-and-ports.sh  |  109 ++++
+ scripts/05-mount-and-volume.sh |  114 ++++
+ scripts/06-compose.sh          |   86 +++
+ scripts/07-git-github.sh       |  137 +++++
+ scripts/_lib.sh                |   19 +
+ scripts/setup-docker-wsl.sh    |   68 +++
+ 25 files changed, 4118 insertions(+)
+
+$ git log -1 --format='Author: %an <%ae>%nDate:   %ad'
+Author: wakeuponce <310057122+wakeuponce@users.noreply.github.com>
+Date:   Wed Jul 29 17:01:10 2026 +0900
+
+
+########## 5. GitHub 저장소 생성 및 푸시 ##########
+
+# --source=. 는 현재 디렉토리를 저장소로 삼고, --push 는 생성 직후 푸시한다.
+
+$ gh repo create codyssey-workstation --public --source=. --remote=origin --push        --description 'Codyssey Mission 01 - 터미널/Docker/Git 개발 워크스테이션 구축'
+https://github.com/wakeuponce/codyssey-workstation
+To github.com:wakeuponce/codyssey-workstation.git
+ * [new branch]      HEAD -> main
+branch 'main' set up to track 'origin/main'.
+
+
+########## 6. 연동 결과 확인 ##########
+
+$ git remote -v
+origin	git@github.com:wakeuponce/codyssey-workstation.git (fetch)
+origin	git@github.com:wakeuponce/codyssey-workstation.git (push)
+
+$ git branch -vv
+* main 6b470b8 [origin/main] Codyssey Mission 01: 개발 워크스테이션 구축
+
+$ gh repo view wakeuponce/codyssey-workstation --json name,visibility,url,defaultBranchRef
+{"defaultBranchRef":{"name":"main"},"name":"codyssey-workstation","url":"https://github.com/wakeuponce/codyssey-workstation","visibility":"PUBLIC"}
+
+# 원격과 로컬의 커밋 해시가 같으면 푸시가 반영된 것이다.
+
+$ git rev-parse HEAD
+6b470b8c714062e95701ab7ccf6a01c904c475ad
+
+$ git ls-remote origin refs/heads/main
+6b470b8c714062e95701ab7ccf6a01c904c475ad	refs/heads/main
+
+
+########## 7. [보너스] GitHub SSH 인증 ##########
+
+# gh auth login 과정에서 ed25519 키가 생성되어 GitHub 계정에 등록되었다.
+
+# HTTPS 는 매 푸시마다 토큰이 필요한 반면, SSH 는 키 쌍으로 인증한다.
+
+# 개인키는 소유자만 읽을 수 있어야 한다(600). 권한이 느슨하면 ssh 가 사용을 거부한다.
+
+$ ls -l ~/.ssh/id_ed25519 ~/.ssh/id_ed25519.pub
+-rw------- 1 wakeuponce wakeuponce 387 Jul 29 16:49 /home/wakeuponce/.ssh/id_ed25519
+-rw-r--r-- 1 wakeuponce wakeuponce  82 Jul 29 16:49 /home/wakeuponce/.ssh/id_ed25519.pub
+
+$ stat -c '%A (%a) %n' ~/.ssh/id_ed25519
+-rw------- (600) /home/wakeuponce/.ssh/id_ed25519
+
+# GitHub 에 등록된 공개키 목록 (공개키는 비밀이 아니므로 그대로 기록한다)
+
+$ gh ssh-key list 2>/dev/null | cut -c1-60 || echo '(조회 권한 없음)'
+GitHub CLI	ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEiFiVneWcmrf
+
+# 실제 인증이 되는지 확인. GitHub 은 셸 접속을 주지 않으므로 이 메시지가 정상 응답이다.
+
+$ ssh -T git@github.com 2>&1 | head -2; true
+Hi wakeuponce! You've successfully authenticated, but GitHub does not provide shell access.
+
+# remote 가 git@ 로 시작하면 SSH 프로토콜을 쓰는 것이다.
+
+$ git remote get-url origin
+git@github.com:wakeuponce/codyssey-workstation.git
+
+# 개인키가 저장소에 섞여 들어가지 않는지 확인 (.gitignore 로 차단)
+
+$ git check-ignore -v id_ed25519 || echo '(경로상 해당 없음 - 키는 ~/.ssh 에 있고 저장소 밖이다)'
+.gitignore:19:id_ed25519*	id_ed25519
