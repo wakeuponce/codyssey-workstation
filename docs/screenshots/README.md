@@ -6,9 +6,9 @@
 
 | 파일 | 무엇을 증명하나 | 대응하는 CLI 검증 |
 |---|---|---|
-| `browser-8080.png` | 호스트 브라우저 → `localhost:8080` → 컨테이너 80 포트 응답 | `curl -i http://localhost:8080/` ([logs/04](../../logs/04-build-and-ports.txt)) |
-| `browser-8081.png` | 같은 이미지를 다른 호스트 포트로 동시 실행 | `curl -i http://localhost:8081/` ([logs/04](../../logs/04-build-and-ports.txt)) |
-| `vscode-github.png` | VSCode 가 WSL 원격 폴더를 열고 GitHub 계정에 로그인된 상태 | `git remote -v` / `gh auth status` ([logs/07](../../logs/07-git-github.txt)) |
+| `browser-8080.png` | 호스트 브라우저 → `localhost:8080` → 컨테이너 80 포트 응답 | `curl -i http://localhost:8080/` ([logs/04](../../logs/04-build-and-ports.md)) |
+| `browser-8081.png` | 같은 이미지를 다른 호스트 포트로 동시 실행 | `curl -i http://localhost:8081/` ([logs/04](../../logs/04-build-and-ports.md)) |
+| `vscode-github.png` | VSCode 가 WSL 원격 폴더를 열고 GitHub 계정에 로그인된 상태 | `git remote -v` / `gh auth status` ([logs/07](../../logs/07-git-github.md)) |
 
 ---
 

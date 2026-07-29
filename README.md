@@ -57,6 +57,7 @@ codyssey/
 │   └── default.conf                # nginx 설정 템플릿 (환경변수 주입)
 ├── scripts/                        # 재현용 실행 스크립트
 │   ├── _lib.sh                     # 명령+출력을 함께 기록하는 헬퍼
+│   ├── _capture.sh                 # 실행 출력을 logs/*.md 로 감싸 저장
 │   ├── setup-docker-wsl.sh         # WSL2 Ubuntu 에 Docker Engine 설치
 │   ├── 01-terminal-basics.sh
 │   ├── 02-permissions.sh
@@ -66,13 +67,13 @@ codyssey/
 │   ├── 06-compose.sh
 │   └── 07-git-github.sh            # Git 설정 + 민감정보 스캔 + GitHub 생성/푸시
 ├── logs/                           # 위 스크립트의 실제 실행 로그 (증거)
-│   ├── 01-terminal.txt
-│   ├── 02-permissions.txt
-│   ├── 03-docker-basics.txt
-│   ├── 04-build-and-ports.txt
-│   ├── 05-mount-and-volume.txt
-│   ├── 06-compose.txt
-│   └── 07-git-github.txt
+│   ├── 01-terminal.md
+│   ├── 02-permissions.md
+│   ├── 03-docker-basics.md
+│   ├── 04-build-and-ports.md
+│   ├── 05-mount-and-volume.md
+│   ├── 06-compose.md
+│   └── 07-git-github.md
 └── docs/screenshots/               # 브라우저 접속 / VSCode 연동 화면
     ├── README.md                   # 각 화면의 텍스트 전사본 + 대응 CLI 검증
     ├── browser-8080.png
@@ -80,7 +81,10 @@ codyssey/
     └── vscode-github.png
 ```
 
-**파일 형식에 대해** — 모든 증거는 코드(`.sh`, `Dockerfile`) 또는 텍스트 문서(`.md`, `.txt`, `.yml`, `.conf`)로만 커밋했습니다. 실행 로그는 `.txt`, nginx 설정은 `.conf` 입니다. (`docker/default.conf` 는 컨테이너 안에서는 `/etc/nginx/templates/default.conf.template` 이라는 이름으로 놓여야 하므로, 그 rename 은 `Dockerfile` 의 `COPY` 목적지 경로에서 처리합니다.)
+**파일 형식에 대해** — 모든 증거는 코드(`.sh`, `Dockerfile`) 또는 문서·설정 파일(`.md`, `.yml`, `.conf`, `.html`, `.css`)로만 커밋했습니다.
+
+- **실행 로그는 `.md`** 입니다. 스크립트 출력을 [`scripts/_capture.sh`](scripts/_capture.sh) 로 코드펜스(```` ```console ````)에 감싸 저장한 것이라, **출력 원문은 한 글자도 편집하지 않았으면서** GitHub 에서 그대로 읽힙니다.
+- **nginx 설정은 `.conf`** 입니다. 이 파일은 컨테이너 안에서 `/etc/nginx/templates/default.conf.template` 이라는 이름이어야 엔트리포인트가 `envsubst` 로 처리하는데, 그 rename 은 저장소 파일명이 아니라 `Dockerfile` 의 `COPY` **목적지 경로**에서 처리합니다.
 
 스크린샷 `.png` 세 장은 미션이 요구하는 화면 증거라 그대로 두었지만, **이미지를 열지 않아도 되도록** 각 화면의 내용을 [`docs/screenshots/README.md`](docs/screenshots/README.md) 에 텍스트로 전사하고 같은 사실을 확인하는 CLI 명령을 함께 적어두었습니다.
 
@@ -101,16 +105,22 @@ codyssey/
 git clone https://github.com/wakeuponce/codyssey-workstation.git
 cd codyssey-workstation
 
-bash scripts/01-terminal-basics.sh   | tee logs/01-terminal.txt
-bash scripts/02-permissions.sh       | tee logs/02-permissions.txt
-bash scripts/03-docker-basics.sh     | tee logs/03-docker-basics.txt
-bash scripts/04-build-and-ports.sh   | tee logs/04-build-and-ports.txt
-bash scripts/05-mount-and-volume.sh  | tee logs/05-mount-and-volume.txt
-bash scripts/06-compose.sh           | tee logs/06-compose.txt
+# 출력을 그대로 보고 싶으면 스크립트만 실행하면 됩니다.
+bash scripts/01-terminal-basics.sh
+
+# 저장소의 logs/*.md 와 같은 형식으로 남기려면 _capture.sh 로 넘깁니다.
+# (출력을 편집하지 않고 코드펜스로 감싸기만 합니다)
+C=scripts/_capture.sh
+bash scripts/01-terminal-basics.sh  2>&1 | bash $C logs/01-terminal.md        "01. 터미널 기본 조작"
+bash scripts/02-permissions.sh      2>&1 | bash $C logs/02-permissions.md     "02. 파일·디렉토리 권한 실습"
+bash scripts/03-docker-basics.sh    2>&1 | bash $C logs/03-docker-basics.md   "03. Docker 기본 조작"
+bash scripts/04-build-and-ports.sh  2>&1 | bash $C logs/04-build-and-ports.md "04. 커스텀 이미지 빌드 및 포트 매핑"
+bash scripts/05-mount-and-volume.sh 2>&1 | bash $C logs/05-mount-and-volume.md "05. 바인드 마운트 및 볼륨"
+bash scripts/06-compose.sh          2>&1 | bash $C logs/06-compose.md         "06. Docker Compose (보너스)"
 
 # 07 은 GitHub 계정을 건드리므로(저장소 생성/푸시) 재현 시에는 선택 사항입니다.
 # gh 인증이 되어 있어야 하며, REPO_NAME 변수를 본인 것으로 바꿔 실행하세요.
-# bash scripts/07-git-github.sh      | tee logs/07-git-github.txt
+# bash scripts/07-git-github.sh     2>&1 | bash $C logs/07-git-github.md      "07. Git 설정 및 GitHub 연동"
 ```
 
 실행 후 브라우저에서 <http://localhost:8080> 과 <http://localhost:8081> 로 접속하면 §7.8 의 화면을 직접 확인할 수 있습니다.
@@ -127,26 +137,26 @@ bash scripts/06-compose.sh           | tee logs/06-compose.txt
 
 | # | 항목 | 상태 | 증거 |
 |---|---|---|---|
-| 1 | 터미널 기본 조작 (위치/목록/이동/생성/복사/이동·이름변경/삭제/내용확인/빈 파일) | ✅ | [§7.1](#71-터미널-기본-조작) · [logs/01](logs/01-terminal.txt) |
+| 1 | 터미널 기본 조작 (위치/목록/이동/생성/복사/이동·이름변경/삭제/내용확인/빈 파일) | ✅ | [§7.1](#71-터미널-기본-조작) · [logs/01](logs/01-terminal.md) |
 | 2 | 절대경로 vs 상대경로 비교 | ✅ | [§7.1](#71-터미널-기본-조작) |
-| 3 | 파일 권한 변경 전/후 비교 (파일 1개 이상) | ✅ | [§7.2](#72-권한-실습) · [logs/02](logs/02-permissions.txt) |
+| 3 | 파일 권한 변경 전/후 비교 (파일 1개 이상) | ✅ | [§7.2](#72-권한-실습) · [logs/02](logs/02-permissions.md) |
 | 4 | 디렉토리 권한 변경 전/후 비교 (디렉토리 1개 이상) | ✅ | [§7.2](#72-권한-실습) |
-| 5 | Docker 설치 및 데몬 동작 점검 (`docker --version`, `docker info`) | ✅ | [§7.3](#73-docker-설치-및-점검) · [logs/03](logs/03-docker-basics.txt) |
+| 5 | Docker 설치 및 데몬 동작 점검 (`docker --version`, `docker info`) | ✅ | [§7.3](#73-docker-설치-및-점검) · [logs/03](logs/03-docker-basics.md) |
 | 6 | 이미지 다운로드/목록 (`pull`, `images`) | ✅ | [§7.4](#74-docker-기본-운영-명령) |
 | 7 | 컨테이너 실행/중지/목록 (`run`, `ps`, `ps -a`, `stop`, `start`) | ✅ | [§7.4](#74-docker-기본-운영-명령) |
 | 8 | 운영 명령 (`logs`, `stats`) | ✅ | [§7.4](#74-docker-기본-운영-명령) |
 | 9 | `hello-world` 실행 성공 | ✅ | [§7.5](#75-hello-world--ubuntu-컨테이너-실습) |
 | 10 | `ubuntu` 컨테이너 내부 진입 후 명령 수행 | ✅ | [§7.5](#75-hello-world--ubuntu-컨테이너-실습) |
 | 11 | attach vs exec 차이 관찰·정리 | ✅ | [§7.6](#76-attach-vs-exec-차이) |
-| 12 | 기존 Dockerfile 기반 커스텀 이미지 제작 | ✅ | [§7.7](#77-커스텀-이미지-빌드) · [logs/04](logs/04-build-and-ports.txt) |
+| 12 | 기존 Dockerfile 기반 커스텀 이미지 제작 | ✅ | [§7.7](#77-커스텀-이미지-빌드) · [logs/04](logs/04-build-and-ports.md) |
 | 13 | 포트 매핑 접속 성공 (2회) | ✅ | [§7.8](#78-포트-매핑-및-접속-증거) |
-| 14 | 바인드 마운트 변경 반영 (호스트 변경 전/후) | ✅ | [§7.9](#79-바인드-마운트--호스트-변경-즉시-반영) · [logs/05](logs/05-mount-and-volume.txt) |
+| 14 | 바인드 마운트 변경 반영 (호스트 변경 전/후) | ✅ | [§7.9](#79-바인드-마운트--호스트-변경-즉시-반영) · [logs/05](logs/05-mount-and-volume.md) |
 | 15 | Docker 볼륨 영속성 (컨테이너 삭제 전/후) | ✅ | [§7.10](#710-볼륨-영속성--컨테이너-삭제-전후) |
-| 16 | Git 사용자 정보·기본 브랜치 설정 (`git config --list`) | ✅ | [§7.12](#712-git-설정-및-github-연동) · [logs/07](logs/07-git-github.txt) |
+| 16 | Git 사용자 정보·기본 브랜치 설정 (`git config --list`) | ✅ | [§7.12](#712-git-설정-및-github-연동) · [logs/07](logs/07-git-github.md) |
 | 17 | GitHub 로그인 및 저장소 연동 | ✅ | [§7.12](#712-git-설정-및-github-연동) |
 | 18 | 민감정보 마스킹 | ✅ | [§10](#10-보안--개인정보-보호) |
 | **보너스** | | | |
-| B1 | Compose 단일/멀티 서비스 실행 | ✅ | [§7.11](#711-보너스-docker-compose) · [logs/06](logs/06-compose.txt) |
+| B1 | Compose 단일/멀티 서비스 실행 | ✅ | [§7.11](#711-보너스-docker-compose) · [logs/06](logs/06-compose.md) |
 | B2 | 컨테이너 간 네트워크 통신 확인 | ✅ | [§7.11](#711-보너스-docker-compose) |
 | B3 | Compose 운영 명령 (`up`/`down`/`ps`/`logs`) | ✅ | [§7.11](#711-보너스-docker-compose) |
 | B4 | 환경 변수 주입으로 설정 분리 | ✅ | [§7.8](#78-포트-매핑-및-접속-증거) |
@@ -177,10 +187,12 @@ bash scripts/06-compose.sh           | tee logs/06-compose.txt
 > **발췌 표기 규칙**
 > 아래 블록은 원본 로그의 **발췌**입니다. 가독성을 위해 반복되는 `cd /home/wakeuponce/... &&` 접두사와 긴 절대경로를 축약했습니다. **명령의 출력과 오류 메시지는 원문 그대로** 옮겼으며, 축약 없는 원본은 [`logs/`](logs/) 에 있습니다.
 > 오류 메시지 앞의 `scripts/_lib.sh: line 8:` 접두사는 명령을 `run()` 헬퍼의 `eval` 로 실행하기 때문에 붙는 것으로, 셸이 직접 실행했다면 `bash:` 로 표시됩니다.
+>
+> [`logs/07-git-github.md`](logs/07-git-github.md) 안에 기록된 스캔 결과에는 로그 파일명이 `.log` 로 남아 있습니다. 그 로그를 남긴 **뒤에** 제출 파일 형식에 맞춰 `logs/*.log → logs/*.md` 로 옮겼기 때문이며, 파일 내용은 그대로입니다. 로그를 사후에 고쳐 쓰지 않고 원본을 그대로 두었다는 뜻이기도 합니다.
 
 ### 7.1 터미널 기본 조작
 
-전체 로그: [`logs/01-terminal.txt`](logs/01-terminal.txt) · 스크립트: [`scripts/01-terminal-basics.sh`](scripts/01-terminal-basics.sh)
+전체 로그: [`logs/01-terminal.md`](logs/01-terminal.md) · 스크립트: [`scripts/01-terminal-basics.sh`](scripts/01-terminal-basics.sh)
 
 **현재 위치 확인 + 절대경로 vs 상대경로**
 
@@ -248,7 +260,7 @@ $ rm -r ~/codyssey-lab/backup/project-snapshot   # 디렉토리는 -r
 
 ### 7.2 권한 실습
 
-전체 로그: [`logs/02-permissions.txt`](logs/02-permissions.txt) · 스크립트: [`scripts/02-permissions.sh`](scripts/02-permissions.sh)
+전체 로그: [`logs/02-permissions.md`](logs/02-permissions.md) · 스크립트: [`scripts/02-permissions.sh`](scripts/02-permissions.sh)
 
 #### 읽는 법
 
@@ -383,7 +395,7 @@ total 4
 
 ### 7.3 Docker 설치 및 점검
 
-전체 로그: [`logs/03-docker-basics.txt`](logs/03-docker-basics.txt)
+전체 로그: [`logs/03-docker-basics.md`](logs/03-docker-basics.md)
 
 ```bash
 $ docker --version
@@ -655,7 +667,7 @@ ephemeral data                            # 아까 exec 로 만든 파일이 그
 
 ### 7.7 커스텀 이미지 빌드
 
-전체 로그: [`logs/04-build-and-ports.txt`](logs/04-build-and-ports.txt) · 정의: [`Dockerfile`](Dockerfile)
+전체 로그: [`logs/04-build-and-ports.md`](logs/04-build-and-ports.md) · 정의: [`Dockerfile`](Dockerfile)
 
 **선택한 기존 베이스**: 방식 (A) — 웹 서버 베이스 이미지 [`nginx:alpine`](https://hub.docker.com/_/nginx) + 정적 콘텐츠/설정 교체
 
@@ -840,7 +852,7 @@ http://localhost:8081/health -> HTTP 200 : ok env=prod port=80
 
 ### 7.9 바인드 마운트 — 호스트 변경 즉시 반영
 
-전체 로그: [`logs/05-mount-and-volume.txt`](logs/05-mount-and-volume.txt)
+전체 로그: [`logs/05-mount-and-volume.md`](logs/05-mount-and-volume.md)
 
 ```bash
 $ docker run -d -p 8083:80 -v /home/wakeuponce/codyssey/app:/usr/share/nginx/html:ro \
@@ -989,7 +1001,7 @@ cat: /data-nowhere.txt: No such file or directory     # 사라졌다
 
 ### 7.11 [보너스] Docker Compose
 
-전체 로그: [`logs/06-compose.txt`](logs/06-compose.txt) · 정의: [`docker-compose.yml`](docker-compose.yml)
+전체 로그: [`logs/06-compose.md`](logs/06-compose.md) · 정의: [`docker-compose.yml`](docker-compose.yml)
 
 `docker run` 의 긴 플래그 조합(`-p`, `-e`, `-v`, `--name`, `--restart`…)이 **파일로 문서화된 실행 설정**으로 바뀝니다. 명령을 기억하거나 공유할 필요 없이 `docker compose up -d` 한 줄이면 팀원 누구나 동일한 구성을 재현합니다.
 
@@ -1118,7 +1130,7 @@ docker stats --no-stream   # 자원을 얼마나 쓰나
 
 ### 7.12 Git 설정 및 GitHub 연동
 
-전체 로그: [`logs/07-git-github.txt`](logs/07-git-github.txt) · 스크립트: [`scripts/07-git-github.sh`](scripts/07-git-github.sh)
+전체 로그: [`logs/07-git-github.md`](logs/07-git-github.md) · 스크립트: [`scripts/07-git-github.sh`](scripts/07-git-github.sh)
 
 **저장소**: <https://github.com/wakeuponce/codyssey-workstation>
 
@@ -1375,13 +1387,22 @@ $ git check-ignore -v id_ed25519
   ```bash
   $ grep -rniE '(password|passwd|secret|token|api[_-]?key|private[_-]?key|ghp_|github_pat_|BEGIN [A-Z ]*PRIVATE KEY)' \
          --exclude-dir=.git --exclude=.gitignore .
-  ./logs/02-permissions.txt:53:$ ... echo 'original content' > secret.txt
-  ./logs/02-permissions.txt:58:-rw-r--r-- (644) secret.txt
-  ./scripts/02-permissions.sh:60:run "cd $LAB && echo 'original content' > secret.txt"
-  ./README.md:296:-r-------- (400) secret.txt
+  ./logs/02-permissions.md:59:$ cd /home/wakeuponce/codyssey-lab/perm && echo 'original content' > secret.txt
+  ./logs/02-permissions.md:64:-rw-r--r-- (644) secret.txt
+  ./logs/02-permissions.md:77:-r-------- (400) secret.txt
+  ./logs/07-git-github.md:16:  - Token: gho_************************************
+  ./logs/07-git-github.md:17:  - Token scopes: 'admin:public_key', 'gist', 'read:org', 'repo'
+  ./logs/07-git-github.md:97:*_token*
   ...
+  총 92 건
   ```
 
-  **검출된 항목은 전부 오탐**입니다. §7.2 권한 실습에서 쓰기 권한 제거를 시연하려고 만든 파일 이름이 `secret.txt` 이고, 그 내용은 `original content` 라는 평문입니다. 실제 자격증명·토큰·키는 저장소 어디에도 없습니다.
+  **검출된 항목은 전부 오탐**입니다. 세 부류뿐입니다.
+
+  1. §7.2 권한 실습에서 쓰기 권한 제거를 시연하려고 만든 파일 이름이 `secret.txt` 이고, 그 내용은 `original content` 라는 평문입니다.
+  2. `gh auth status` 가 출력한 토큰은 **`gh` 자신이 `gho_****...` 로 마스킹**한 문자열입니다. 실제 값이 아니라 자리표시자이며, 스코프 목록만 평문입니다.
+  3. 나머지 대부분은 **스캔 명령 자신과 그 결과가 로그·문서에 기록된 것**입니다 (`*_token*` 은 `.gitignore` 규칙 문자열, 검색 정규식 안의 `ghp_|github_pat_` 등). 재귀 grep 이 자기 출력을 다시 잡는 구조입니다.
+
+  실제 자격증명·토큰·개인키는 저장소 어디에도 없습니다.
 
 - **스크린샷**: 브라우저 주소창과 응답 화면만 포함하며, 계정 정보나 토큰이 보이는 영역은 촬영에서 제외했습니다.

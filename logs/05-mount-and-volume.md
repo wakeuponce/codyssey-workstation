@@ -1,3 +1,9 @@
+# 05. 바인드 마운트 및 볼륨 — 실행 로그
+
+> 스크립트의 **실제 출력 전문**입니다. 아래 코드펜스 안의 내용은 편집하지 않았습니다.
+> `$` 로 시작하는 줄이 입력한 명령, 그 아래가 그 명령의 출력입니다.
+
+```console
 
 
 ########## 0. 실습 준비 ##########
@@ -203,3 +209,4 @@ $ docker ps --format 'table {{.Names}}\t{{.Ports}}\t{{.Status}}'
 NAMES               PORTS                                     STATUS
 codyssey-web-8081   0.0.0.0:8081->80/tcp, [::]:8081->80/tcp   Up 31 seconds (healthy)
 codyssey-web-8080   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   Up 34 seconds (healthy)
+```

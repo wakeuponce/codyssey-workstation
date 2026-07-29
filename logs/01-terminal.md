@@ -1,3 +1,9 @@
+# 01. 터미널 기본 조작 — 실행 로그
+
+> 스크립트의 **실제 출력 전문**입니다. 아래 코드펜스 안의 내용은 편집하지 않았습니다.
+> `$` 로 시작하는 줄이 입력한 명령, 그 아래가 그 명령의 출력입니다.
+
+```console
 
 
 ########## 0. 실습 준비 - 깨끗한 상태에서 시작 ##########
@@ -145,3 +151,4 @@ drwxr-xr-x /home/wakeuponce/codyssey-lab/project
 -rw-r--r-- /home/wakeuponce/codyssey-lab/project/.hidden-config
 drwxr-xr-x /home/wakeuponce/codyssey-lab/project/src
 -rw-r--r-- /home/wakeuponce/codyssey-lab/project/src/renamed.txt
+```
