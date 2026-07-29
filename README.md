@@ -54,7 +54,7 @@ codyssey/
 │   ├── index.html
 │   └── style.css
 ├── docker/
-│   └── default.conf.template       # nginx 설정 템플릿 (환경변수 주입)
+│   └── default.conf                # nginx 설정 템플릿 (환경변수 주입)
 ├── scripts/                        # 재현용 실행 스크립트
 │   ├── _lib.sh                     # 명령+출력을 함께 기록하는 헬퍼
 │   ├── setup-docker-wsl.sh         # WSL2 Ubuntu 에 Docker Engine 설치
@@ -66,15 +66,23 @@ codyssey/
 │   ├── 06-compose.sh
 │   └── 07-git-github.sh            # Git 설정 + 민감정보 스캔 + GitHub 생성/푸시
 ├── logs/                           # 위 스크립트의 실제 실행 로그 (증거)
-│   ├── 01-terminal.log
-│   ├── 02-permissions.log
-│   ├── 03-docker-basics.log
-│   ├── 04-build-and-ports.log
-│   ├── 05-mount-and-volume.log
-│   └── 06-compose.log
+│   ├── 01-terminal.txt
+│   ├── 02-permissions.txt
+│   ├── 03-docker-basics.txt
+│   ├── 04-build-and-ports.txt
+│   ├── 05-mount-and-volume.txt
+│   ├── 06-compose.txt
+│   └── 07-git-github.txt
 └── docs/screenshots/               # 브라우저 접속 / VSCode 연동 화면
-    └── README.md                   # 무엇을 어떻게 촬영해야 하는지
+    ├── README.md                   # 각 화면의 텍스트 전사본 + 대응 CLI 검증
+    ├── browser-8080.png
+    ├── browser-8081.png
+    └── vscode-github.png
 ```
+
+**파일 형식에 대해** — 모든 증거는 코드(`.sh`, `Dockerfile`) 또는 텍스트 문서(`.md`, `.txt`, `.yml`, `.conf`)로만 커밋했습니다. 실행 로그는 `.txt`, nginx 설정은 `.conf` 입니다. (`docker/default.conf` 는 컨테이너 안에서는 `/etc/nginx/templates/default.conf.template` 이라는 이름으로 놓여야 하므로, 그 rename 은 `Dockerfile` 의 `COPY` 목적지 경로에서 처리합니다.)
+
+스크린샷 `.png` 세 장은 미션이 요구하는 화면 증거라 그대로 두었지만, **이미지를 열지 않아도 되도록** 각 화면의 내용을 [`docs/screenshots/README.md`](docs/screenshots/README.md) 에 텍스트로 전사하고 같은 사실을 확인하는 CLI 명령을 함께 적어두었습니다.
 
 `scripts/` 안의 파일은 모두 `755` 로 커밋되어 있어 `./scripts/01-terminal-basics.sh` 처럼 바로 실행됩니다. §7.2 에서 다룬 "실행하려면 `x` 가 필요하다"를 저장소 자신에게도 적용한 것입니다. (Git 이 실행 비트를 추적하려면 `core.filemode=true` 여야 하며, 이는 §7.12 에서 확인합니다.)
 
@@ -93,16 +101,16 @@ codyssey/
 git clone https://github.com/wakeuponce/codyssey-workstation.git
 cd codyssey-workstation
 
-bash scripts/01-terminal-basics.sh   | tee logs/01-terminal.log
-bash scripts/02-permissions.sh       | tee logs/02-permissions.log
-bash scripts/03-docker-basics.sh     | tee logs/03-docker-basics.log
-bash scripts/04-build-and-ports.sh   | tee logs/04-build-and-ports.log
-bash scripts/05-mount-and-volume.sh  | tee logs/05-mount-and-volume.log
-bash scripts/06-compose.sh           | tee logs/06-compose.log
+bash scripts/01-terminal-basics.sh   | tee logs/01-terminal.txt
+bash scripts/02-permissions.sh       | tee logs/02-permissions.txt
+bash scripts/03-docker-basics.sh     | tee logs/03-docker-basics.txt
+bash scripts/04-build-and-ports.sh   | tee logs/04-build-and-ports.txt
+bash scripts/05-mount-and-volume.sh  | tee logs/05-mount-and-volume.txt
+bash scripts/06-compose.sh           | tee logs/06-compose.txt
 
 # 07 은 GitHub 계정을 건드리므로(저장소 생성/푸시) 재현 시에는 선택 사항입니다.
 # gh 인증이 되어 있어야 하며, REPO_NAME 변수를 본인 것으로 바꿔 실행하세요.
-# bash scripts/07-git-github.sh      | tee logs/07-git-github.log
+# bash scripts/07-git-github.sh      | tee logs/07-git-github.txt
 ```
 
 실행 후 브라우저에서 <http://localhost:8080> 과 <http://localhost:8081> 로 접속하면 §7.8 의 화면을 직접 확인할 수 있습니다.
@@ -119,26 +127,26 @@ bash scripts/06-compose.sh           | tee logs/06-compose.log
 
 | # | 항목 | 상태 | 증거 |
 |---|---|---|---|
-| 1 | 터미널 기본 조작 (위치/목록/이동/생성/복사/이동·이름변경/삭제/내용확인/빈 파일) | ✅ | [§7.1](#71-터미널-기본-조작) · [logs/01](logs/01-terminal.log) |
+| 1 | 터미널 기본 조작 (위치/목록/이동/생성/복사/이동·이름변경/삭제/내용확인/빈 파일) | ✅ | [§7.1](#71-터미널-기본-조작) · [logs/01](logs/01-terminal.txt) |
 | 2 | 절대경로 vs 상대경로 비교 | ✅ | [§7.1](#71-터미널-기본-조작) |
-| 3 | 파일 권한 변경 전/후 비교 (파일 1개 이상) | ✅ | [§7.2](#72-권한-실습) · [logs/02](logs/02-permissions.log) |
+| 3 | 파일 권한 변경 전/후 비교 (파일 1개 이상) | ✅ | [§7.2](#72-권한-실습) · [logs/02](logs/02-permissions.txt) |
 | 4 | 디렉토리 권한 변경 전/후 비교 (디렉토리 1개 이상) | ✅ | [§7.2](#72-권한-실습) |
-| 5 | Docker 설치 및 데몬 동작 점검 (`docker --version`, `docker info`) | ✅ | [§7.3](#73-docker-설치-및-점검) · [logs/03](logs/03-docker-basics.log) |
+| 5 | Docker 설치 및 데몬 동작 점검 (`docker --version`, `docker info`) | ✅ | [§7.3](#73-docker-설치-및-점검) · [logs/03](logs/03-docker-basics.txt) |
 | 6 | 이미지 다운로드/목록 (`pull`, `images`) | ✅ | [§7.4](#74-docker-기본-운영-명령) |
 | 7 | 컨테이너 실행/중지/목록 (`run`, `ps`, `ps -a`, `stop`, `start`) | ✅ | [§7.4](#74-docker-기본-운영-명령) |
 | 8 | 운영 명령 (`logs`, `stats`) | ✅ | [§7.4](#74-docker-기본-운영-명령) |
 | 9 | `hello-world` 실행 성공 | ✅ | [§7.5](#75-hello-world--ubuntu-컨테이너-실습) |
 | 10 | `ubuntu` 컨테이너 내부 진입 후 명령 수행 | ✅ | [§7.5](#75-hello-world--ubuntu-컨테이너-실습) |
 | 11 | attach vs exec 차이 관찰·정리 | ✅ | [§7.6](#76-attach-vs-exec-차이) |
-| 12 | 기존 Dockerfile 기반 커스텀 이미지 제작 | ✅ | [§7.7](#77-커스텀-이미지-빌드) · [logs/04](logs/04-build-and-ports.log) |
+| 12 | 기존 Dockerfile 기반 커스텀 이미지 제작 | ✅ | [§7.7](#77-커스텀-이미지-빌드) · [logs/04](logs/04-build-and-ports.txt) |
 | 13 | 포트 매핑 접속 성공 (2회) | ✅ | [§7.8](#78-포트-매핑-및-접속-증거) |
-| 14 | 바인드 마운트 변경 반영 (호스트 변경 전/후) | ✅ | [§7.9](#79-바인드-마운트--호스트-변경-즉시-반영) · [logs/05](logs/05-mount-and-volume.log) |
+| 14 | 바인드 마운트 변경 반영 (호스트 변경 전/후) | ✅ | [§7.9](#79-바인드-마운트--호스트-변경-즉시-반영) · [logs/05](logs/05-mount-and-volume.txt) |
 | 15 | Docker 볼륨 영속성 (컨테이너 삭제 전/후) | ✅ | [§7.10](#710-볼륨-영속성--컨테이너-삭제-전후) |
-| 16 | Git 사용자 정보·기본 브랜치 설정 (`git config --list`) | ✅ | [§7.12](#712-git-설정-및-github-연동) · [logs/07](logs/07-git-github.log) |
+| 16 | Git 사용자 정보·기본 브랜치 설정 (`git config --list`) | ✅ | [§7.12](#712-git-설정-및-github-연동) · [logs/07](logs/07-git-github.txt) |
 | 17 | GitHub 로그인 및 저장소 연동 | ✅ | [§7.12](#712-git-설정-및-github-연동) |
 | 18 | 민감정보 마스킹 | ✅ | [§10](#10-보안--개인정보-보호) |
 | **보너스** | | | |
-| B1 | Compose 단일/멀티 서비스 실행 | ✅ | [§7.11](#711-보너스-docker-compose) · [logs/06](logs/06-compose.log) |
+| B1 | Compose 단일/멀티 서비스 실행 | ✅ | [§7.11](#711-보너스-docker-compose) · [logs/06](logs/06-compose.txt) |
 | B2 | 컨테이너 간 네트워크 통신 확인 | ✅ | [§7.11](#711-보너스-docker-compose) |
 | B3 | Compose 운영 명령 (`up`/`down`/`ps`/`logs`) | ✅ | [§7.11](#711-보너스-docker-compose) |
 | B4 | 환경 변수 주입으로 설정 분리 | ✅ | [§7.8](#78-포트-매핑-및-접속-증거) |
@@ -172,7 +180,7 @@ bash scripts/06-compose.sh           | tee logs/06-compose.log
 
 ### 7.1 터미널 기본 조작
 
-전체 로그: [`logs/01-terminal.log`](logs/01-terminal.log) · 스크립트: [`scripts/01-terminal-basics.sh`](scripts/01-terminal-basics.sh)
+전체 로그: [`logs/01-terminal.txt`](logs/01-terminal.txt) · 스크립트: [`scripts/01-terminal-basics.sh`](scripts/01-terminal-basics.sh)
 
 **현재 위치 확인 + 절대경로 vs 상대경로**
 
@@ -240,7 +248,7 @@ $ rm -r ~/codyssey-lab/backup/project-snapshot   # 디렉토리는 -r
 
 ### 7.2 권한 실습
 
-전체 로그: [`logs/02-permissions.log`](logs/02-permissions.log) · 스크립트: [`scripts/02-permissions.sh`](scripts/02-permissions.sh)
+전체 로그: [`logs/02-permissions.txt`](logs/02-permissions.txt) · 스크립트: [`scripts/02-permissions.sh`](scripts/02-permissions.sh)
 
 #### 읽는 법
 
@@ -375,7 +383,7 @@ total 4
 
 ### 7.3 Docker 설치 및 점검
 
-전체 로그: [`logs/03-docker-basics.log`](logs/03-docker-basics.log)
+전체 로그: [`logs/03-docker-basics.txt`](logs/03-docker-basics.txt)
 
 ```bash
 $ docker --version
@@ -647,7 +655,7 @@ ephemeral data                            # 아까 exec 로 만든 파일이 그
 
 ### 7.7 커스텀 이미지 빌드
 
-전체 로그: [`logs/04-build-and-ports.log`](logs/04-build-and-ports.log) · 정의: [`Dockerfile`](Dockerfile)
+전체 로그: [`logs/04-build-and-ports.txt`](logs/04-build-and-ports.txt) · 정의: [`Dockerfile`](Dockerfile)
 
 **선택한 기존 베이스**: 방식 (A) — 웹 서버 베이스 이미지 [`nginx:alpine`](https://hub.docker.com/_/nginx) + 정적 콘텐츠/설정 교체
 
@@ -656,7 +664,7 @@ ephemeral data                            # 아까 exec 로 만든 파일이 그
 | # | 커스텀 포인트 | 목적 |
 |---|---|---|
 | 1 | `COPY app/ /usr/share/nginx/html/` | 기본 nginx 환영 페이지를 미션용 정적 사이트로 교체 |
-| 2 | `COPY docker/default.conf.template` + `ENV NGINX_PORT / APP_ENV` | **설정과 코드의 분리.** listen 포트와 `/health` 응답을 이미지 재빌드 없이 환경변수로 바꾼다 |
+| 2 | `COPY docker/default.conf` + `ENV NGINX_PORT / APP_ENV` | **설정과 코드의 분리.** listen 포트와 `/health` 응답을 이미지 재빌드 없이 환경변수로 바꾼다 |
 | 3 | `RUN apk add --no-cache curl` | HEALTHCHECK 와 컨테이너 간 통신 검증에 필요. `--no-cache` 로 패키지 인덱스를 남기지 않아 이미지가 커지지 않게 함 |
 | 4 | `HEALTHCHECK ... CMD curl -fsS .../health` | 컨테이너가 "떠 있음"과 "정상 응답함"을 Docker 가 구분해 판정하게 함 |
 | 5 | `LABEL org.opencontainers.image.*` | OCI 표준 라벨로 이미지 출처·용도를 메타데이터에 남김 |
@@ -674,25 +682,27 @@ $ docker build -t codyssey-web:1.0 .
 #1 [internal] load build definition from Dockerfile
 #1 DONE 0.0s
 #2 [internal] load metadata for docker.io/library/nginx:alpine
-#2 DONE 1.5s
+#2 DONE 0.8s
 #3 [internal] load .dockerignore
 #3 DONE 0.0s
 #4 [internal] load build context
 #4 DONE 0.0s
 #5 [1/4] FROM docker.io/library/nginx:alpine@sha256:4a73073bd557c65b759505da037898b61f1be6cbcc3c2c3aeac22d2a470c1752
 #5 DONE 0.0s
-#6 [3/4] COPY docker/default.conf.template /etc/nginx/templates/default.conf.template
+#6 [2/4] RUN apk add --no-cache curl
 #6 CACHED
-#7 [2/4] RUN apk add --no-cache curl
+#7 [3/4] COPY docker/default.conf /etc/nginx/templates/default.conf.template
 #7 CACHED
 #8 [4/4] COPY app/ /usr/share/nginx/html/
-#8 CACHED
+#8 DONE 0.0s
 #9 exporting to image
 #9 naming to docker.io/library/codyssey-web:1.0 done
-#9 DONE 0.1s
+#9 DONE 0.2s
 ```
 
-이 로그는 **재빌드** 결과라 모든 레이어가 `CACHED` 입니다. Dockerfile 과 `app/` 내용이 이전 빌드와 동일하므로 Docker 가 레이어를 재사용했고, 전체 빌드가 2초 안에 끝났습니다. 최초 빌드에서는 `nginx:alpine` 레이어 다운로드(20.31MB 등)와 `apk add curl` 실행이 실제로 수행됩니다.
+이 로그는 **재빌드** 결과입니다. `#6 RUN apk add curl` 과 `#7 COPY docker/default.conf` 는 `CACHED` 로 재사용됐고 `#8 COPY app/` 만 다시 실행됐습니다. 직전에 `app/` 파일 권한을 `644` 로 정리하면서 그 레이어의 내용이 달라졌기 때문입니다 — Docker 는 파일 본문뿐 아니라 **권한 같은 메타데이터까지** 레이어 해시에 반영합니다.
+
+Dockerfile 에서 잘 바뀌지 않는 `RUN apk add` 를 위에, 자주 바뀌는 `COPY` 를 아래에 둔 이유가 이것입니다. 아래쪽 레이어가 무효화돼도 위쪽 패키지 설치는 다시 하지 않으므로 재빌드가 1초 안에 끝납니다. 반대로 위쪽 레이어가 바뀌면 **그 아래 레이어는 전부 다시** 만들어집니다. 최초 빌드에서는 `nginx:alpine` 레이어 다운로드(20.31MB 등)와 `apk add curl` 실행이 실제로 수행됩니다.
 
 **커스텀이 실제로 이미지에 새겨졌는지 확인**
 
@@ -720,7 +730,7 @@ Env: ["PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
 
 ```bash
 $ docker run -d -p 8080:80 --restart unless-stopped --name codyssey-web-8080 codyssey-web:1.0
-91334a6934ab1c8ac93002016cf2283785fd340becef3593218d33691e85446c
+89b20295a12d54b778a1aa5cd0b0e66ed4ba94e106abc76dd44b44e90d2ea7b3
 
 $ docker ps --format 'table {{.Names}}\t{{.Ports}}\t{{.Status}}'
 NAMES               PORTS                                     STATUS
@@ -729,12 +739,12 @@ codyssey-web-8080   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   Up 2 seconds (heal
 $ curl -sS -i http://localhost:8080/ | head -12
 HTTP/1.1 200 OK
 Server: nginx/1.31.3
-Date: Wed, 29 Jul 2026 06:37:27 GMT
+Date: Wed, 29 Jul 2026 12:36:58 GMT
 Content-Type: text/html
 Content-Length: 1142
-Last-Modified: Wed, 29 Jul 2026 06:26:32 GMT
+Last-Modified: Wed, 29 Jul 2026 06:37:50 GMT
 Connection: keep-alive
-ETag: "6a699d18-476"
+ETag: "6a699fbe-476"
 Accept-Ranges: bytes
 
 <!doctype html>
@@ -745,12 +755,12 @@ Accept-Ranges: bytes
 
 ```bash
 $ docker run -d -p 8081:80 -e APP_ENV=prod --restart unless-stopped --name codyssey-web-8081 codyssey-web:1.0
-ab047e18bf2affe5e3f6fee5d9008c332ff1582a2528da5c0b36ff58714b1d12
+6eb4bb3bcb46802b36bd90b6d0a7c475bd29ade4d16a56a4a4983584136f57d1
 
 $ docker ps --format 'table {{.Names}}\t{{.Ports}}\t{{.Status}}'
 NAMES               PORTS                                     STATUS
 codyssey-web-8081   0.0.0.0:8081->80/tcp, [::]:8081->80/tcp   Up 2 seconds (health: starting)
-codyssey-web-8080   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   Up 5 seconds (healthy)
+codyssey-web-8080   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   Up 5 seconds (health: starting)
 ```
 
 컨테이너 포트는 **둘 다 80** 이지만 호스트 포트가 달라 충돌하지 않습니다. 이것이 "이미지 하나 → 컨테이너 여러 개"가 가능한 이유입니다.
@@ -776,8 +786,8 @@ codyssey-web-8080   Up 17 seconds (healthy)
 $ docker inspect codyssey-web-8080 --format 'Health={{.State.Health.Status}}'
 Health=healthy
 
-$ docker inspect codyssey-web-8080 --format '{{json (index .State.Health.Log 0).Output}}'
-"ok env=dev port=80\n"
+$ docker inspect codyssey-web-8080 --format 'LastCheck={{json (index .State.Health.Log 0).Output}}'
+LastCheck="ok env=dev port=80\n"
 ```
 
 #### 포트 매핑이 **왜** 필요한가 — `-p` 없이 띄워서 비교
@@ -822,11 +832,15 @@ http://localhost:8081/health -> HTTP 200 : ok env=prod port=80
 | `http://localhost:8080` | ![8080 접속 화면](docs/screenshots/browser-8080.png) |
 | `http://localhost:8081` | ![8081 접속 화면](docs/screenshots/browser-8081.png) |
 
+두 캡처 모두 **주소창(`localhost:8080` / `localhost:8081`)과 응답 화면이 한 장에** 들어가 있습니다. 이미지를 열 수 없는 환경을 위해 주소창 문자열과 페이지 본문을 [`docs/screenshots/README.md`](docs/screenshots/README.md#1-browser-8080png--포트-매핑-1회차) 에 텍스트로 전사해 두었습니다.
+
+주소창의 `:8080` 은 **호스트 포트**이고 페이지 본문에 표시된 "컨테이너 포트 80" 은 **컨테이너 내부 포트**입니다. 이 둘이 다른데도 화면이 뜬다는 사실 자체가 `-p 8080:80` 이 동작했다는 증거입니다.
+
 ---
 
 ### 7.9 바인드 마운트 — 호스트 변경 즉시 반영
 
-전체 로그: [`logs/05-mount-and-volume.log`](logs/05-mount-and-volume.log)
+전체 로그: [`logs/05-mount-and-volume.txt`](logs/05-mount-and-volume.txt)
 
 ```bash
 $ docker run -d -p 8083:80 -v /home/wakeuponce/codyssey/app:/usr/share/nginx/html:ro \
@@ -975,7 +989,7 @@ cat: /data-nowhere.txt: No such file or directory     # 사라졌다
 
 ### 7.11 [보너스] Docker Compose
 
-전체 로그: [`logs/06-compose.log`](logs/06-compose.log) · 정의: [`docker-compose.yml`](docker-compose.yml)
+전체 로그: [`logs/06-compose.txt`](logs/06-compose.txt) · 정의: [`docker-compose.yml`](docker-compose.yml)
 
 `docker run` 의 긴 플래그 조합(`-p`, `-e`, `-v`, `--name`, `--restart`…)이 **파일로 문서화된 실행 설정**으로 바뀝니다. 명령을 기억하거나 공유할 필요 없이 `docker compose up -d` 한 줄이면 팀원 누구나 동일한 구성을 재현합니다.
 
@@ -1104,7 +1118,7 @@ docker stats --no-stream   # 자원을 얼마나 쓰나
 
 ### 7.12 Git 설정 및 GitHub 연동
 
-전체 로그: [`logs/07-git-github.log`](logs/07-git-github.log) · 스크립트: [`scripts/07-git-github.sh`](scripts/07-git-github.sh)
+전체 로그: [`logs/07-git-github.txt`](logs/07-git-github.txt) · 스크립트: [`scripts/07-git-github.sh`](scripts/07-git-github.sh)
 
 **저장소**: <https://github.com/wakeuponce/codyssey-workstation>
 
@@ -1246,6 +1260,8 @@ $ git check-ignore -v id_ed25519
 - **저장소 연동** — 탐색기 루트가 `CODYSSEY [WSL: UBUNTU]` 이며 `Dockerfile`, `docker-compose.yml`, `logs/`, `scripts/` 등 프로젝트 파일이 그대로 보임
 - **WSL 원격 연결** — Windows 의 VSCode 가 WSL2 Ubuntu 안의 `~/codyssey` 를 직접 열고 있음. 즉 편집은 Windows 에서 하고 파일·Git·Docker 는 Linux 쪽에서 동작한다
 
+이미지를 열 수 없는 환경을 위해 이 화면의 내용도 [`docs/screenshots/README.md`](docs/screenshots/README.md#3-vscode-githubpng--vscode--github--wsl-연동) 에 텍스트로 전사해 두었습니다. (캡처에는 로그인 ID 만 보이고 토큰·비밀번호는 포함되지 않았습니다.)
+
 ---
 
 ## 8. 개념 정리
@@ -1359,8 +1375,8 @@ $ git check-ignore -v id_ed25519
   ```bash
   $ grep -rniE '(password|passwd|secret|token|api[_-]?key|private[_-]?key|ghp_|github_pat_|BEGIN [A-Z ]*PRIVATE KEY)' \
          --exclude-dir=.git --exclude=.gitignore .
-  ./logs/02-permissions.log:53:$ ... echo 'original content' > secret.txt
-  ./logs/02-permissions.log:58:-rw-r--r-- (644) secret.txt
+  ./logs/02-permissions.txt:53:$ ... echo 'original content' > secret.txt
+  ./logs/02-permissions.txt:58:-rw-r--r-- (644) secret.txt
   ./scripts/02-permissions.sh:60:run "cd $LAB && echo 'original content' > secret.txt"
   ./README.md:296:-r-------- (400) secret.txt
   ...

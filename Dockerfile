@@ -27,7 +27,7 @@ ENV NGINX_PORT=80 \
 
 # nginx:alpine 은 /etc/nginx/templates/*.template 를 envsubst 로 치환해
 # /etc/nginx/conf.d/ 에 떨어뜨린 뒤 기동한다. (공식 엔트리포인트 기능)
-COPY docker/default.conf.template /etc/nginx/templates/default.conf.template
+COPY docker/default.conf /etc/nginx/templates/default.conf.template
 
 # 커스텀 포인트 1) 정적 콘텐츠 교체
 COPY app/ /usr/share/nginx/html/

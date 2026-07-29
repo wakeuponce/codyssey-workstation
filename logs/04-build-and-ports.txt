@@ -8,13 +8,15 @@ codyssey-web-8081
 
 $ pwd && ls -l
 /home/wakeuponce/codyssey
-total 24
--rwxr-xr-x 1 wakeuponce wakeuponce 1942 Jul 29 15:26 Dockerfile
-drwxr-xr-x 2 wakeuponce wakeuponce 4096 Jul 29 15:35 app
-drwxr-xr-x 2 wakeuponce wakeuponce 4096 Jul 29 15:26 docker
--rwxr-xr-x 1 wakeuponce wakeuponce 1518 Jul 29 15:26 docker-compose.yml
-drwxr-xr-x 2 wakeuponce wakeuponce 4096 Jul 29 15:35 logs
-drwxr-xr-x 2 wakeuponce wakeuponce 4096 Jul 29 15:37 scripts
+total 96
+-rw-r--r-- 1 wakeuponce wakeuponce  1933 Jul 29 21:33 Dockerfile
+-rw-r--r-- 1 wakeuponce wakeuponce 65847 Jul 29 21:35 README.md
+drwxr-xr-x 2 wakeuponce wakeuponce  4096 Jul 29 15:37 app
+drwxr-xr-x 2 wakeuponce wakeuponce  4096 Jul 29 21:33 docker
+-rw-r--r-- 1 wakeuponce wakeuponce  1518 Jul 29 15:26 docker-compose.yml
+drwxr-xr-x 3 wakeuponce wakeuponce  4096 Jul 29 16:38 docs
+drwxr-xr-x 2 wakeuponce wakeuponce  4096 Jul 29 21:33 logs
+drwxr-xr-x 2 wakeuponce wakeuponce  4096 Jul 29 17:01 scripts
 
 
 ########## 1. 커스텀 이미지 빌드 ##########
@@ -51,7 +53,7 @@ ENV NGINX_PORT=80 \
 
 # nginx:alpine 은 /etc/nginx/templates/*.template 를 envsubst 로 치환해
 # /etc/nginx/conf.d/ 에 떨어뜨린 뒤 기동한다. (공식 엔트리포인트 기능)
-COPY docker/default.conf.template /etc/nginx/templates/default.conf.template
+COPY docker/default.conf /etc/nginx/templates/default.conf.template
 
 # 커스텀 포인트 1) 정적 콘텐츠 교체
 COPY app/ /usr/share/nginx/html/
@@ -79,50 +81,51 @@ $ docker build -t codyssey-web:1.0 .
 #0 building with "default" instance using docker driver
 
 #1 [internal] load build definition from Dockerfile
-#1 transferring dockerfile: 1.98kB done
+#1 transferring dockerfile: 1.97kB done
 #1 DONE 0.0s
 
 #2 [internal] load metadata for docker.io/library/nginx:alpine
-#2 DONE 1.5s
+#2 DONE 0.8s
 
 #3 [internal] load .dockerignore
 #3 transferring context: 102B done
 #3 DONE 0.0s
 
 #4 [internal] load build context
-#4 transferring context: 1.32kB done
+#4 transferring context: 2.99kB done
 #4 DONE 0.0s
 
 #5 [1/4] FROM docker.io/library/nginx:alpine@sha256:4a73073bd557c65b759505da037898b61f1be6cbcc3c2c3aeac22d2a470c1752
 #5 resolve docker.io/library/nginx:alpine@sha256:4a73073bd557c65b759505da037898b61f1be6cbcc3c2c3aeac22d2a470c1752 0.0s done
 #5 DONE 0.0s
 
-#6 [3/4] COPY docker/default.conf.template /etc/nginx/templates/default.conf.template
+#6 [2/4] RUN apk add --no-cache curl
 #6 CACHED
 
-#7 [2/4] RUN apk add --no-cache curl
+#7 [3/4] COPY docker/default.conf /etc/nginx/templates/default.conf.template
 #7 CACHED
 
 #8 [4/4] COPY app/ /usr/share/nginx/html/
-#8 CACHED
+#8 DONE 0.0s
 
 #9 exporting to image
-#9 exporting layers done
-#9 exporting manifest sha256:9ec824b3fe89c78cdf823a91942473933e13a6d83f1a538c1b1add3535e8cc36 done
-#9 exporting config sha256:fad472a992124eb64840fe8514d785d7d4cb3fdf39150145bd71afe942b9250c done
-#9 exporting attestation manifest sha256:280cc9ad9e1ce1560e581ac0f0c7297a25f6c59d0d3f12505cc0a7c346d17705
-#9 exporting attestation manifest sha256:280cc9ad9e1ce1560e581ac0f0c7297a25f6c59d0d3f12505cc0a7c346d17705 0.0s done
-#9 exporting manifest list sha256:3e42bd83e2a6e9ba3e96b2412e414f0f80d6278b375974bc69dc2186959fabc0 0.0s done
+#9 exporting layers 0.1s done
+#9 exporting manifest sha256:24c2f3fcd1126aba634bafd2ec505fd6c1a34cb7400122f637202d14b1fd09f5 0.0s done
+#9 exporting config sha256:1598dada3451e6e68836f304a750bff3f1908bcca5bb86fd560d76a09b27e010
+#9 exporting config sha256:1598dada3451e6e68836f304a750bff3f1908bcca5bb86fd560d76a09b27e010 0.0s done
+#9 exporting attestation manifest sha256:e9d629a4f88b8204321ec3114112261a942d36bb13f208ee936a13b80e97d3b8 0.0s done
+#9 exporting manifest list sha256:ec3f0182b287849065b69b3eea18bf631a0198458682841bada4f0c6540bb146 0.0s done
 #9 naming to docker.io/library/codyssey-web:1.0 done
-#9 unpacking to docker.io/library/codyssey-web:1.0 done
-#9 DONE 0.1s
+#9 unpacking to docker.io/library/codyssey-web:1.0 0.0s done
+#9 DONE 0.2s
 
 # 베이스 이미지(nginx:alpine)와 내가 만든 이미지가 함께 보인다.
 
 $ docker images
 IMAGE                ID             DISK USAGE   CONTENT SIZE   EXTRA
-codyssey-web:1.0     3e42bd83e2a6       92.9MB         26.1MB        
+codyssey-web:1.0     ec3f0182b287       92.9MB         26.1MB        
 hello-world:latest   c3cbe1cc1aa5       25.9kB         9.49kB        
+httpd:alpine         1b766f17b840       97.3MB         21.9MB        
 ubuntu:24.04         4fbb8e6a8395        119MB         31.7MB        
 
 # 이미지에 새겨둔 LABEL / ENV 확인
@@ -143,7 +146,7 @@ Env: ["PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin","NGINX
 #   (WSL 배포판이 종료됐다 켜지면 dockerd 도 재시작되므로, 이 정책이 없으면 멈춰 있다. 트러블슈팅 #2)
 
 $ docker run -d -p 8080:80 --restart unless-stopped --name codyssey-web-8080 codyssey-web:1.0
-91334a6934ab1c8ac93002016cf2283785fd340becef3593218d33691e85446c
+89b20295a12d54b778a1aa5cd0b0e66ed4ba94e106abc76dd44b44e90d2ea7b3
 
 $ sleep 2
 
@@ -156,12 +159,12 @@ codyssey-web-8080   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   Up 2 seconds (heal
 $ curl -sS -i http://localhost:8080/ | head -12
 HTTP/1.1 200 OK
 Server: nginx/1.31.3
-Date: Wed, 29 Jul 2026 06:37:27 GMT
+Date: Wed, 29 Jul 2026 12:36:58 GMT
 Content-Type: text/html
 Content-Length: 1142
-Last-Modified: Wed, 29 Jul 2026 06:26:32 GMT
+Last-Modified: Wed, 29 Jul 2026 06:37:50 GMT
 Connection: keep-alive
-ETag: "6a699d18-476"
+ETag: "6a699fbe-476"
 Accept-Ranges: bytes
 
 <!doctype html>
@@ -186,19 +189,19 @@ ok env=dev port=80
 # 호스트 포트가 다르므로 충돌하지 않는다. -e 로 환경변수를 덮어써 설정만 바꿔본다.
 
 $ docker run -d -p 8081:80 -e APP_ENV=prod --restart unless-stopped --name codyssey-web-8081 codyssey-web:1.0
-ab047e18bf2affe5e3f6fee5d9008c332ff1582a2528da5c0b36ff58714b1d12
+6eb4bb3bcb46802b36bd90b6d0a7c475bd29ade4d16a56a4a4983584136f57d1
 
 $ sleep 2
 
 $ docker ps --format 'table {{.Names}}\t{{.Ports}}\t{{.Status}}'
 NAMES               PORTS                                     STATUS
 codyssey-web-8081   0.0.0.0:8081->80/tcp, [::]:8081->80/tcp   Up 2 seconds (health: starting)
-codyssey-web-8080   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   Up 5 seconds (healthy)
+codyssey-web-8080   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   Up 5 seconds (health: starting)
 
 $ curl -sS -i http://localhost:8081/ | head -3
 HTTP/1.1 200 OK
 Server: nginx/1.31.3
-Date: Wed, 29 Jul 2026 06:37:30 GMT
+Date: Wed, 29 Jul 2026 12:37:01 GMT
 
 # 8080 은 env=dev, 8081 은 env=prod. 코드는 그대로고 설정만 달라졌다.
 
@@ -234,7 +237,7 @@ LastCheck="ok env=dev port=80\n"
 # 호스트의 80 포트가 아니라 '컨테이너 안의' 80 포트다. -p 로 다리를 놓아야 호스트가 닿는다.
 
 $ docker run -d --name codyssey-web-noport codyssey-web:1.0
-bcf446c4750784948eaa7cc18045cf9a612a3d0c7529dd31eb115da4729aa0b6
+61ae951c05d0f7cb7ae76df4ba13938c09b7a28d0a2efa14cffc022b095d2566
 
 $ sleep 2
 
@@ -272,7 +275,7 @@ codyssey-web-noport
 
 $ docker ps --format 'table {{.Names}}\t{{.Image}}\t{{.Ports}}\t{{.Status}}'
 NAMES               IMAGE              PORTS                                     STATUS
-codyssey-web-8081   codyssey-web:1.0   0.0.0.0:8081->80/tcp, [::]:8081->80/tcp   Up 19 seconds (healthy)
-codyssey-web-8080   codyssey-web:1.0   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   Up 22 seconds (healthy)
+codyssey-web-8081   codyssey-web:1.0   0.0.0.0:8081->80/tcp, [::]:8081->80/tcp   Up 18 seconds (healthy)
+codyssey-web-8080   codyssey-web:1.0   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   Up 21 seconds (healthy)
 
 # 8080/8081 컨테이너는 다음 단계(바인드 마운트/볼륨) 및 브라우저 접속 확인을 위해 살려둔다.
