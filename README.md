@@ -1238,6 +1238,12 @@ $ git check-ignore -v id_ed25519
 
 ![VSCode GitHub 연동](docs/screenshots/vscode-github.png)
 
+위 화면에서 세 가지가 동시에 확인됩니다.
+
+- **GitHub 로그인** — 계정(Accounts) 메뉴에 `wakeuponce (GitHub)` 표시
+- **저장소 연동** — 탐색기 루트가 `CODYSSEY [WSL: UBUNTU]` 이며 `Dockerfile`, `docker-compose.yml`, `logs/`, `scripts/` 등 프로젝트 파일이 그대로 보임
+- **WSL 원격 연결** — Windows 의 VSCode 가 WSL2 Ubuntu 안의 `~/codyssey` 를 직접 열고 있음. 즉 편집은 Windows 에서 하고 파일·Git·Docker 는 Linux 쪽에서 동작한다
+
 ---
 
 ## 8. 개념 정리
