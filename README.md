@@ -76,6 +76,8 @@ codyssey/
     └── README.md                   # 무엇을 어떻게 촬영해야 하는지
 ```
 
+`scripts/` 안의 파일은 모두 `755` 로 커밋되어 있어 `./scripts/01-terminal-basics.sh` 처럼 바로 실행됩니다. §7.2 에서 다룬 "실행하려면 `x` 가 필요하다"를 저장소 자신에게도 적용한 것입니다. (Git 이 실행 비트를 추적하려면 `core.filemode=true` 여야 하며, 이는 §7.12 에서 확인합니다.)
+
 증거 수집 규칙("명령어 입력과 출력 결과가 함께 포함")을 지키기 위해 모든 스크립트는 [`scripts/_lib.sh`](scripts/_lib.sh) 의 `run()` 래퍼를 씁니다. 명령을 `$ ` 프롬프트와 함께 먼저 출력하고 실행하므로, 로그만 봐도 무엇을 쳤고 무엇이 나왔는지 알 수 있습니다.
 
 ---
@@ -136,9 +138,9 @@ bash scripts/06-compose.sh           | tee logs/06-compose.log
 | 17 | GitHub 로그인 및 저장소 연동 | ✅ | [§7.12](#712-git-설정-및-github-연동) |
 | 18 | 민감정보 마스킹 | ✅ | [§10](#10-보안--개인정보-보호) |
 | **보너스** | | | |
-| B1 | Compose 단일/멀티 서비스 실행 | ✅ | [§7.11](#711-보너스--docker-compose) · [logs/06](logs/06-compose.log) |
-| B2 | 컨테이너 간 네트워크 통신 확인 | ✅ | [§7.11](#711-보너스--docker-compose) |
-| B3 | Compose 운영 명령 (`up`/`down`/`ps`/`logs`) | ✅ | [§7.11](#711-보너스--docker-compose) |
+| B1 | Compose 단일/멀티 서비스 실행 | ✅ | [§7.11](#711-보너스-docker-compose) · [logs/06](logs/06-compose.log) |
+| B2 | 컨테이너 간 네트워크 통신 확인 | ✅ | [§7.11](#711-보너스-docker-compose) |
+| B3 | Compose 운영 명령 (`up`/`down`/`ps`/`logs`) | ✅ | [§7.11](#711-보너스-docker-compose) |
 | B4 | 환경 변수 주입으로 설정 분리 | ✅ | [§7.8](#78-포트-매핑-및-접속-증거) |
 | B5 | GitHub SSH 키 설정 | ✅ | [§7.12 ⑤](#712-git-설정-및-github-연동) |
 
@@ -158,7 +160,7 @@ bash scripts/06-compose.sh           | tee logs/06-compose.log
 | 환경변수 주입이 됐는가 | `curl /health` | `env=dev` / `env=prod` / `env=compose` | [§7.8](#78-포트-매핑-및-접속-증거) |
 | 바인드 마운트가 반영되는가 | 호스트 파일 `sed` 수정 후 `curl` | 재빌드 없이 응답 변경, 동시에 8080은 불변 | [§7.9](#79-바인드-마운트--호스트-변경-즉시-반영) |
 | 볼륨이 영속적인가 | `docker rm -f` 후 새 컨테이너에서 `cat` | 삭제된 컨테이너 ID가 적힌 파일이 그대로 조회됨 | [§7.10](#710-볼륨-영속성--컨테이너-삭제-전후) |
-| 서비스 디스커버리가 되는가 | `docker compose exec web curl http://api/` | 이름만으로 응답 수신 + 없는 이름은 DNS 실패 | [§7.11](#711-보너스--docker-compose) |
+| 서비스 디스커버리가 되는가 | `docker compose exec web curl http://api/` | 이름만으로 응답 수신 + 없는 이름은 DNS 실패 | [§7.11](#711-보너스-docker-compose) |
 
 ---
 
