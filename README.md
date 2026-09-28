@@ -1,5 +1,7 @@
 # Codyssey Mission 01 · 개발 워크스테이션 구축
 
+> **Mission 02 (나를 소개하는 웹페이지)** 는 [`portfolio/`](portfolio/) 폴더에 있습니다 → [portfolio/README.md](portfolio/README.md) · 배포: https://wakeuponce.github.io/codyssey-workstation/
+
 터미널(Linux CLI) · Docker · Git/GitHub 세 가지 도구로 **"내 컴퓨터에서만 돌아가는" 문제를 없애는 재현 가능한 개발 환경**을 구축하고, 그 과정을 실행 결과로 증명한 기록입니다.
 
 이 문서는 **평가자가 README만 읽고 동일 절차를 재현할 수 있도록** 작성했습니다. 모든 명령/출력은 실제 수행 결과이며, 전체 원본 로그는 [`logs/`](logs/) 에 있습니다.
