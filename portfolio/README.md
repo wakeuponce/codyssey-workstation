@@ -90,7 +90,7 @@ API 상태를 일부러 만들기 어려우므로, 주소 뒤에 쿼리를 붙�
 
 ## 4. 배포 (GitHub Pages)
 
-저장소 루트는 Mission 01 결과물이므로, `portfolio/` 폴더만 GitHub Actions 로 배포합니다 ([`.github/workflows/deploy-portfolio.yml`](../.github/workflows/deploy-portfolio.yml)).
+저장소 루트는 Mission 01 결과물이므로, `portfolio/` 폴더를 GitHub Actions 로 배포합니다 ([`.github/workflows/deploy-pages.yml`](../.github/workflows/deploy-pages.yml), Mission 03 `booklog/` 도 같은 워크플로에서 `/booklog/` 경로로 함께 배포).
 
 1. 저장소 **Settings → Pages → Build and deployment → Source: GitHub Actions** 선택 (최초 1회)
 2. `main` 브랜치에 `portfolio/**` 변경이 push 되면 자동 배포 (Actions 탭에서 수동 실행도 가능)

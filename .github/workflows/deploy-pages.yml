@@ -1,0 +1,82 @@
+# GitHub Pages 배포: portfolio/(Mission 02) 를 루트에, booklog/(Mission 03) 빌드 결과를 /booklog/ 에 올린다.
+#   https://wakeuponce.github.io/codyssey-workstation/          → portfolio
+#   https://wakeuponce.github.io/codyssey-workstation/booklog/  → booklog (React SPA)
+#
+# 최초 1회 설정
+#   1) Settings → Pages → Build and deployment → Source: "GitHub Actions"
+#   2) Settings → Secrets and variables → Actions → New repository secret
+#        VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY  (값은 Supabase → Project Settings → API)
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'portfolio/**'
+      - 'booklog/**'
+      - '.github/workflows/deploy-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    defaults:
+      run:
+        working-directory: booklog
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: booklog/package-lock.json
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+
+      # 환경변수가 없으면 배포된 앱에서 CRUD 가 동작하지 않으므로 배포 자체를 막는다.
+      - name: Check Supabase secrets
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$VITE_SUPABASE_URL" ] || [ -z "$VITE_SUPABASE_ANON_KEY" ]; then
+            echo "::error::VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY 저장소 Secret 이 없습니다. booklog/README.md 4장을 참고해 등록하세요."
+            exit 1
+          fi
+
+      # GitHub Pages 는 모든 경로를 index.html 로 돌려보내는 설정이 없으므로 해시 라우터(/#/books/1) 사용
+      - name: Build booklog
+        env:
+          BASE_PATH: ./
+          VITE_ROUTER_MODE: hash
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: npm run build
+
+      - name: Assemble site
+        working-directory: .
+        run: |
+          mkdir -p _site
+          cp -r portfolio/. _site/
+          cp -r booklog/dist _site/booklog
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4

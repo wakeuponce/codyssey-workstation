@@ -1,0 +1,26 @@
+# booklog 변경이 담긴 PR 마다 lint · 테스트 · 빌드를 확인한다. (Supabase 없이도 통과)
+name: booklog CI
+
+on:
+  pull_request:
+    paths:
+      - 'booklog/**'
+      - '.github/workflows/ci-booklog.yml'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: booklog
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: booklog/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
